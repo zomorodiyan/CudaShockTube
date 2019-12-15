@@ -5,28 +5,11 @@
 #include <iostream>
 #include "ShockTube.cuh"
 
-#define cucheck_dev(call)                                   \
-{                                                           \
-  cudaError_t cucheck_err = (call);                         \
-  if(cucheck_err != cudaSuccess) {                          \
-    const char *err_str = cudaGetErrorString(cucheck_err);  \
-    printf("%s (%d): %s\n", __FILE__, __LINE__, err_str);   \
-    assert(0);                                              \
-  }                                                         \
-}
-// Wrap device CUDA calls with cucheck_err as in the following example.
-// cucheck_dev(cudaGetLastError());
 
 /**/
 int main() {
-	std::cout << "hello world" << std::endl;
-	ShockTube st;
-	st.logcu();
-	st.logcpp();
-	st.allocHostMemory();
-	st.initialize();
-	double* averages = st.getAverages();
-	std::cout << averages[0] << "\t" << averages[1] << "\t" << averages[2] << "\t" << averages[3] << std::endl;
+	HostTest01();
+	DeviceTest01();
 	return 0;
 }
 /*/

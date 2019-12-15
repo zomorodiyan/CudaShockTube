@@ -1,10 +1,6 @@
 #include <iostream>
 #include "ShockTube.cuh"
 
-void ShockTube::logcpp(){
-	std::cout << "I am in ShockTube.cpp" << std::endl;
-}
-
 
 // Allocate space for host copies of the variables
 void ShockTube::allocHostMemory() {

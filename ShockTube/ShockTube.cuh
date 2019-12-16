@@ -9,7 +9,7 @@ public:
 	~ShockTube(){ ; }
 
 	// Host Tests
-	void HostTest01(); //void HostTest02(); //void HostTest03();
+	void HostTest01(); void HostTest02(); //void HostTest03();
 
 	// Device Tests
 	void DeviceTest01(); //void DeviceTest02(); //void DeviceTest03(); 
@@ -22,9 +22,10 @@ public:
 
 	// Assigns Sod's shock tube problem initial conditions to host memory
 	void initHostMemory();
-
-	// Assigns Sod's shock tube problem initial conditions to device memory
 	
+	// reflection boundary condition at the both ends of the shock tube
+	void hostBoundaryCondition();
+
 	// Calculate and return average values of u, v, p, e
 	double* getAverages();
 

@@ -71,6 +71,16 @@ double* ShockTube::getAverages() {
 	return averages;
 }
 
+// reflection boundary condition at the both ends of the shock tube
+void ShockTube::hostBoundaryCondition() {
+	u1[0] = u1[1];
+	u2[0] = -u2[1];
+	u3[0] = u3[1];
+	u1[nbrOfGrids - 1] = u1[nbrOfGrids - 2];
+	u2[nbrOfGrids - 1] = -u2[nbrOfGrids - 2];
+	u3[nbrOfGrids - 1] = u3[nbrOfGrids - 2];
+}
+
 // Free allocated space for host copies of the variables
 void ShockTube::freeHostMemory() {
 	free(u1);

@@ -9,6 +9,7 @@
 int main() {
 	ShockTube st;
 	st.HostTest01();
+	st.HostTest02();
 	st.DeviceTest01();
 	return 0;
 }

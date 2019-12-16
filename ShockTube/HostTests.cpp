@@ -27,3 +27,18 @@ void ShockTube::HostTest01() {
 		std::cout << fail << test << reset << std::endl;
 }
 
+void ShockTube::HostTest02() {
+	const std::string test = "HostBoundaryConditionWorksCorrectly";
+	std::cout << __func__;
+	nbrOfGrids = 10;
+	allocHostMemory();
+	u1[1] = u1[8] = 1; u1[0] = u1[9] = 0;
+	u2[1] = u2[8] = -1; u2[0] = u2[9] = 0;
+	u3[1] = u3[8] = 1; u3[0] = u3[9] = 0;
+	hostBoundaryCondition();
+	if((1 == u1[0]) && (1 == u1[9]) && (1 == u2[0])
+		&& (1 == u2[9]) && (1 == u3[0]) && (1 == u3[9]))
+		std::cout << pass << test << reset << std::endl;
+	else
+		std::cout << fail << test << reset << std::endl;
+}

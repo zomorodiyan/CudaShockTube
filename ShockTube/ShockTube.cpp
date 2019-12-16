@@ -30,7 +30,7 @@ double ShockTube::cMax() {
 	return cMax;
 }
 
-void ShockTube::initialize() {
+void ShockTube::initHostMemory() {
 	length = 1;                      // length of shock tube
 	gama = 1.4;                 // ratio of specific heats
 	cfl = 0.9;                  // Courant-Friedrichs-Lewy number
@@ -69,4 +69,15 @@ double* ShockTube::getAverages() {
 	pAverage /= nbrOfGrids;
 	static double averages[4] = { roAverage, uAverage, eAverage, pAverage };
 	return averages;
+}
+
+// Free allocated space for host copies of the variables
+void ShockTube::freeHostMemory() {
+	free(u1);
+	free(u2);
+	free(u3);
+	free(f1);
+	free(f2);
+	free(f3);
+	free(vol);
 }

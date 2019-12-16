@@ -6,10 +6,10 @@
 #include "ShockTube.cuh"
 
 
-/**/
 int main() {
-	HostTest01();
-	DeviceTest01();
+	ShockTube st;
+	st.HostTest01();
+	st.DeviceTest01();
 	return 0;
 }
 /*/

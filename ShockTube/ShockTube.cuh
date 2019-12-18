@@ -12,7 +12,7 @@ public:
 	void HostTest01(); void HostTest02(); void HostTest03();
 
 	// Device Tests
-	void DeviceTest01(); void DeviceTest02(); //void DeviceTest03(); 
+	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); 
 
 	// Allocate space for host copies of the variables
 	void allocHostMemory();
@@ -49,19 +49,37 @@ public:
 	double *d_u1, *d_u2, *d_u3, *d_f1, *d_f2, *d_f3, *d_vol, *d_cMax, *d_u1Temp, *d_u2Temp, *d_u3Temp;
 	int size = nbrOfGrids * sizeof(int);
 
-	// Calculate and return cMax
-	void updateCMax();
+	// Calculate and update cMax
+	void hostUpdateCMax();
 
-	// Calculate and return tau
-	void updateTau();
+	// Calculate and update tau
+	void hostUpdateTau();
 
 	// copy device data members to host data members
 	void copyDeviceToHost(const int nbrOfGrids);
 
+	// copy flux from device to host (for debegging purpose)
+	void copyFluxFromDeviceToHost(const int nbrOfGrids);
+
 	// copy host data members to device data members
 	void copyHostToDevice(const int nbrOfGrids);
 
-	void laxWendroffStep();
+// used in laxWendroffStep
+	void updateFlux();
+
+// used in laxWendroffStep
+	void updateFluxTemp();
+
+// used in laxWendroffStep
+	void halfStep();
+
+// used in laxWendroffStep
+	void step();
+
+// used in laxWendroffStep
+	void updateU();
+
+	void hostLaxWendroffStep();
 
 	void lapidusViscosity();
 };
@@ -78,12 +96,35 @@ __global__ void initDeviceMemory(const int nbrOfGrids, double *d_u1,
 	double *d_length, double *d_gama, double *d_cfl, double *d_nu,
 	double *d_tau, double *d_cMax, double *d_t);
 
-__global__ void DeviceBoundaryCondition(const int nbrOfGrids,
+__global__ void boundaryCondition(const int nbrOfGrids,
 	double *d_u1, double *d_u2, double *d_u3);
 
-/**/
-__device__ void updateTau(const int nbrOfGrids, const double *d_u1,
-	const double *d_u2, const double *d_u3, const double *d_gamma,
+__device__ void d_boundaryCondition(const int nbrOfGrids,
+	double *d_u1, double *d_u2, double *d_u3);
+
+__global__ void updateTau(const int nbrOfGrids, const double *d_u1,
+	const double *d_u2, const double *d_u3, const double *d_gama,
 	double *d_cMax, const double *d_h, const double *d_cfl, double *d_tau);
-/**/
+
+// used in laxWendroffStep
+__device__ void updateFlux(const int nbrOfGrids, const double *d_u1, const double *d_u2,
+		const double *d_u3, double *d_f1, double *d_f2, double *d_f3, const double *d_gama);
+
+// used in laxWendroffStep
+__device__ void halfStep(const int nbrOfGrids, const double *d_u1, const double *d_u2,
+	const double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
+	const double *d_f1, const double *d_f2, const double *d_f3, const double *d_tau, const double *d_h);
+
+// used in laxWendroffStep
+__device__ void step(const int nbrOfGrids, const double *d_u1, const double *d_u2,
+	const double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
+	const double *d_f1, const double *d_f2, const double *d_f3, const double *d_tau, const double *d_h);
+
+// used in laxWendroffStep
+__device__ void updateU(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, const double *d_u1Temp, const double *d_u2Temp, const double *d_u3Temp);
+
+__global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
+	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);
 

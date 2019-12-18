@@ -18,7 +18,7 @@ void ShockTube::allocHostMemory() {
 }
 
 // Calculate and update value of cMax
-void ShockTube::updateCMax() {
+void ShockTube::hostUpdateCMax() {
 	double ro, u, p, c; cMax = 0;
 	for (int i = 0; i < nbrOfGrids; i++) {
 		if (u1[i] == 0)
@@ -50,7 +50,7 @@ void ShockTube::initHostMemory() {
 		u3[i] = e;
 		vol[i] = 1;
 	}
-	updateCMax();
+	hostUpdateCMax();
 	tau = cfl * h / cMax;     // time grid size
 }
 
@@ -105,13 +105,13 @@ void ShockTube::freeHostMemory() {
 }
 
 // Calculate and return tau
-void ShockTube::updateTau() {
-	updateCMax();
+void ShockTube::hostUpdateTau() {
+	hostUpdateCMax();
 	tau = cfl * h / cMax;
 }
 
-void ShockTube::laxWendroffStep(){
-	// compute flux F from U
+// used in hostLaxWendroffStep
+void ShockTube::updateFlux() {
 	for (int j = 0; j < nbrOfGrids; j++) {
 		double rho = u1[j];
 		double m = u2[j];
@@ -121,17 +121,10 @@ void ShockTube::laxWendroffStep(){
 		f2[j] = m * m / rho + p;
 		f3[j] = m / rho * (e + p);
 	}
+}
 
-	// half step
-	for (int j = 1; j < nbrOfGrids - 1; j++){
-			u1Temp[j] = (u1[j + 1] + u1[j]) / 2 - tau / 2 / h * (f1[j + 1] - f1[j]);
-			u2Temp[j] = (u2[j + 1] + u2[j]) / 2 - tau / 2 / h * (f2[j + 1] - f2[j]);
-			u3Temp[j] = (u3[j + 1] + u3[j]) / 2 - tau / 2 / h * (f3[j + 1] - f3[j]);
-	}
-
-	hostBoundaryConditionTemp();
-
-	// compute flux at half steps
+// used in hostLaxWendroffStep
+void ShockTube::updateFluxTemp() {
 	for (int j = 0; j < nbrOfGrids; j++) {
 		double rho = u1Temp[j];
 		double m = u2Temp[j];
@@ -141,20 +134,42 @@ void ShockTube::laxWendroffStep(){
 		f2[j] = m * m / rho + p;
 		f3[j] = m / rho * (e + p);
 	}
+}
 
-	// step using half step flux
+// used in hostLaxWendroffStep
+void ShockTube::halfStep() {
+	for (int j = 1; j < nbrOfGrids - 1; j++){
+			u1Temp[j] = (u1[j + 1] + u1[j]) / 2 - tau / 2 / h * (f1[j + 1] - f1[j]);
+			u2Temp[j] = (u2[j + 1] + u2[j]) / 2 - tau / 2 / h * (f2[j + 1] - f2[j]);
+			u3Temp[j] = (u3[j + 1] + u3[j]) / 2 - tau / 2 / h * (f3[j + 1] - f3[j]);
+	}
+}
+
+// used in hostLaxWendroffStep
+void ShockTube::step() {
 	for (int j = 1; j < nbrOfGrids - 1; j++){
 		u1Temp[j] = u1[j] - tau / h * (f1[j] - f1[j - 1]);
 		u2Temp[j] = u2[j] - tau / h * (f2[j] - f2[j - 1]);
 		u3Temp[j] = u3[j] - tau / h * (f3[j] - f3[j - 1]);
 	}
+}
 
-	// update U from newU
+// used in hostLaxWendroffStep
+void ShockTube::updateU() {
 	for (int j = 1; j < nbrOfGrids - 1; j++){
 		u1[j] = u1Temp[j];
 		u2[j] = u2Temp[j];
 		u3[j] = u3Temp[j];
 	}
+}
+
+void ShockTube::hostLaxWendroffStep(){
+	updateFlux();
+	halfStep();
+	hostBoundaryConditionTemp();
+	updateFluxTemp();
+	step();
+	updateU();
 }
 
 void ShockTube::lapidusViscosity() {

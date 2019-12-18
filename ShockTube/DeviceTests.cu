@@ -52,12 +52,35 @@ void ShockTube::DeviceTest02() {
 	u1[1] = u1[8] = 1; 	u2[1] = u2[8] = -1;	u3[1] = u3[8] = 1; 
 	allocDeviceMemory();
 	copyHostToDevice(nbrOfGrids);
-	DeviceBoundaryCondition<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3);
+	boundaryCondition<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3);
 	copyDeviceToHost(nbrOfGrids);
+	freeDeviceMemory();
 	if((1 == u1[0]) && (1 == u1[9]) && (1 == u2[0])
 		&& (1 == u2[9]) && (1 == u3[0]) && (1 == u3[9]))
 		std::cout << pass << test << reset << std::endl;
 	else
 		std::cout << fail << test << reset << std::endl;
+	freeHostMemory();
 }
 
+
+void ShockTube::DeviceTest03() {
+	const std::string test = "LaxWendroff Step";
+	std::cout << yellow << __func__ << reset;
+	nbrOfGrids = 10;
+	allocDeviceMemory();
+	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	laxWendroffStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, 
+		d_f1, d_f2, d_f3, d_tau, d_h, d_gama);
+	allocHostMemory();
+	copyDeviceToHost(nbrOfGrids);
+	freeDeviceMemory();
+	double eps = 1e-14;
+	if((abs(u1[4] - 0.739642857142857) < eps) && (abs(u2[4] - 0.21554331167307) < eps)
+		&& (abs(u3[4] - 1.62828130612245) < eps) && (abs(u1[5] - 0.385357142857143) < eps)
+		&& (abs(u2[5] - 0.46903163465702) < eps) && (abs(u3[5] - 1.1217186938775515) < eps))
+		std::cout << pass << test << reset << std::endl;
+	else
+		std::cout << fail << test << reset << std::endl;
+	freeHostMemory();
+}

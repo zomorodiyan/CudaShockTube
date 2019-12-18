@@ -40,17 +40,16 @@ void ShockTube::HostTest02() {
 		std::cout << pass << test << reset << std::endl;
 	else
 		std::cout << fail << test << reset << std::endl;
+	freeHostMemory();
 }
 
 void ShockTube::HostTest03() {
-	const std::string test = "laxWendroffStep";
+	const std::string test = "laxWendroff Step";
 	std::cout << yellow << __func__ << reset;
 	nbrOfGrids = 10;
 	allocHostMemory();
 	initHostMemory();
-	hostBoundaryCondition();
-	updateTau();
-	laxWendroffStep();
+	hostLaxWendroffStep();
 	double eps = 1e-14;
 	if((abs(u1[4] - 0.739642857142857) < eps) && (abs(u2[4] - 0.21554331167307) < eps)
 		&& (abs(u3[4] - 1.62828130612245) < eps) && (abs(u1[5] - 0.385357142857143) < eps)

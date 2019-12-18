@@ -13,6 +13,7 @@ int main() {
 	st.HostTest03();
 	st.DeviceTest01();
 	st.DeviceTest02();
+	st.DeviceTest03();
 	return 0;
 }
 /*/

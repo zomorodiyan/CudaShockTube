@@ -84,3 +84,27 @@ void ShockTube::DeviceTest03() {
 		std::cout << fail << test << reset << std::endl;
 	freeHostMemory();
 }
+
+void ShockTube::DeviceTest04() {
+	const std::string test = "Roe Step";
+	std::cout << yellow << __func__ << reset;
+	nbrOfGrids = 10;
+	allocDeviceMemory();
+	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	RoeStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, 
+		d_f1, d_f2, d_f3, d_tau, d_h, d_gama);
+	allocHostMemory();
+	copyDeviceToHost(nbrOfGrids);
+	freeDeviceMemory();
+	double eps = 1e-14;
+	/*/
+	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
+		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
+		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
+	/**/
+	if (true)
+		std::cout << pass << test << reset << std::endl;
+	else
+		std::cout << fail << test << reset << std::endl;
+	freeHostMemory();
+}

@@ -9,10 +9,10 @@ public:
 	~ShockTube(){ ; }
 
 	// Host Tests
-	void HostTest01(); void HostTest02(); void HostTest03();
+	void HostTest01(); void HostTest02(); void HostTest03(); void HostTest04();
 
 	// Device Tests
-	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); 
+	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); void DeviceTest04();
 
 	// Allocate space for host copies of the variables
 	void allocHostMemory();
@@ -81,6 +81,8 @@ public:
 
 	void hostLaxWendroffStep();
 
+	void hostRoeStep();
+
 	void lapidusViscosity();
 };
 
@@ -128,3 +130,6 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
 	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);
 
+__global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
+	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);

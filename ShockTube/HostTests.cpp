@@ -59,3 +59,20 @@ void ShockTube::HostTest03() {
 		std::cout << fail << test << reset << std::endl;
 	freeHostMemory();
 }
+
+void ShockTube::HostTest04() {
+	const std::string test = "Roe Step";
+	std::cout << yellow << __func__ << reset;
+	nbrOfGrids = 10;
+	allocHostMemory();
+	initHostMemory();
+	hostRoeStep();
+	double eps = 1e-14;
+	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
+		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
+		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
+		std::cout << pass << test << reset << std::endl;
+	else
+		std::cout << fail << test << reset << std::endl;
+	freeHostMemory();
+}

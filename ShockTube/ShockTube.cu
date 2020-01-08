@@ -259,3 +259,10 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 	step(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, d_f1, d_f2, d_f3, d_tau, d_h);
 	updateU(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp);
 }
+
+
+__global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
+	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama) {
+	;
+}

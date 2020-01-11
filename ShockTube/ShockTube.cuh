@@ -53,7 +53,8 @@ public:
 		// just used in Roe and pike step
 	double *w1,*w2,*w3,*w4, *fc1,*fc2,*fc3, *fr1,*fr2,*fr3, *fl1,*fl2,*fl3, *fludif1,*fludif2,*fludif3,
 		*rsumr, *utilde, *htilde, *uvdif, *absvt, *ssc, *vsc,
-		*eiglam1,*eiglam2,*eiglam3, *sgn1,*sgn2,*sgn3, *isb1,*isb2,*isb3, *a1,*a2,*a3, *ac11,*ac12,*ac13, *ac21,*ac22,*ac23;
+		*eiglam1,*eiglam2,*eiglam3, *sgn1,*sgn2,*sgn3, *a1, *a2, *a3, *ac11,*ac12,*ac13, *ac21,*ac22,*ac23;
+	int *isb1, *isb2, *isb3;
 
 	// Calculate and update cMax
 	void hostUpdateCMax();
@@ -149,5 +150,5 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *fludif1,double *fludif2,double *fludif3,
 	double *rsumr, double *utilde, double *htilde, double *uvdif, double *absvt, double *ssc, double *vsc,
 	double *eiglam1,double *eiglam2,double *eiglam3, double *sgn1,double *sgn2,double *sgn3,
-	double *isb1,double *isb2,double *isb3, double *a1,double *a2,double *a3,
+	int *isb1,int *isb2,int *isb3, double *a1,double *a2,double *a3,
 	double *ac11,double *ac12,double *ac13, double *ac21,double *ac22,double *ac23);

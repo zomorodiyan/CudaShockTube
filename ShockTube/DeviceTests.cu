@@ -5,8 +5,8 @@
 
 #define fail "\033[1;31m"
 #define pass "\033[1;32m"
-#define yellow "\033[1;33m"
-#define reset "\033[0m"
+#define yellow " \033[1;33m"
+#define reset " \033[0m"
 #define cudaErrorCheck(call)                                \
 {                                                           \
   cudaError_t cucheck_err = (call);                         \
@@ -96,25 +96,8 @@ void ShockTube::DeviceTest04() {
 	rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
 	eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
 	allocHostMemory();
-
-	initHostMemory(); // debug
-	hostRoeStep(); // debug
-	std::cout.precision(15); // debug
-
-	std::cout << pass << "\nHost values\n";
-	std::cout << "u1[4]: " << u1[4] << "\tu2[4]: " << u2[4] << "\tu3[4]: " << u3[4] // debug
-		<< "\tu1[5]: " << u1[5] << "\tu2[5]: " << u2[5] << "\tu3[5]: " << u3[5] << reset << std::endl; // debug
-
 	copyDeviceToHost(nbrOfGrids);
-	std::cout << yellow << "Device values\n";
-	std::cout << "u1[4]: " << u1[4] << "\tu2[4]: " << u2[4] << "\tu3[4]: " << u3[4] // debug
-		<< "\tu1[5]: " << u1[5] << "\tu2[5]: " << u2[5] << "\tu3[5]: " << u3[5] << reset << std::endl; // debug
-//	std::cout << pass << "u1[4]: 0.702848465455315" << "u2[4]: 0.342287473165049" << "u3[4]: 1.514301621685751" // debug
-//		<< "u1[5]: 0.422151534544684" << "u2[5]: 0.34228747316504" << "u3[5]: 1.235698378314249"  << reset << std::endl; // debug
-
 	freeDeviceMemory();
-
-
 	double eps = 1e-14;
 	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
 		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)

@@ -370,12 +370,12 @@ void ShockTube::hostRoeStep()
 	/**/// }}}
 
 
-	/**/
+	/*/
 	// update U debug
 	for (int j = 1; j < nbrOfGrids - 1; j++) {
-		u1[j] = sgn[j][0];
-		u2[j] = sgn[j][1];
-		u3[j] = sgn[j][2];
+		u1[j] = f1[j];
+		u2[j] = f2[j];
+		u3[j] = f3[j];
 	}
 
 	/*/

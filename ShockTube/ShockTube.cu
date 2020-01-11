@@ -70,9 +70,6 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&sgn1, size));
 	cudaErrorCheck(cudaMalloc((void **)&sgn2, size));
 	cudaErrorCheck(cudaMalloc((void **)&sgn3, size));
-	cudaErrorCheck(cudaMalloc((void **)&isb1, size));
-	cudaErrorCheck(cudaMalloc((void **)&isb2, size));
-	cudaErrorCheck(cudaMalloc((void **)&isb3, size));
 	cudaErrorCheck(cudaMalloc((void **)&a1, size));
 	cudaErrorCheck(cudaMalloc((void **)&a2, size));
 	cudaErrorCheck(cudaMalloc((void **)&a3, size));
@@ -89,6 +86,9 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&absvt, size));
 	cudaErrorCheck(cudaMalloc((void **)&ssc, size));
 	cudaErrorCheck(cudaMalloc((void **)&vsc, size));
+	cudaErrorCheck(cudaMalloc((void **)&isb1, nbrOfGrids * sizeof(int)));
+	cudaErrorCheck(cudaMalloc((void **)&isb2, nbrOfGrids * sizeof(int)));
+	cudaErrorCheck(cudaMalloc((void **)&isb3, nbrOfGrids * sizeof(int)));
 }
 
 // Free allocated space for device copies of the variables
@@ -343,7 +343,7 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *fludif1,double *fludif2,double *fludif3,
 	double *rsumr, double *utilde, double *htilde, double *uvdif, double *absvt, double *ssc, double *vsc,
 	double *eiglam1,double *eiglam2,double *eiglam3, double *sgn1,double *sgn2,double *sgn3,
-	double *isb1,double *isb2,double *isb3, double *a1,double *a2,double *a3,
+	int *isb1,int *isb2,int *isb3, double *a1,double *a2,double *a3,
 	double *ac11,double *ac12,double *ac13, double *ac21,double *ac22,double *ac23) {
 
 
@@ -443,45 +443,48 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 		ac23[nbrOfGrids - 1] = ac13[nbrOfGrids - 1];
 
 
-		/*/ {{{ // this part needs thinking. mmm...
 		double dtdx = *d_tau / *d_h;
 		if ((i > 1) && (i < nbrOfGrids - 1)) {
 			isb1[i] = i - int(sgn1[i]);
 			ac21[i] = ac11[i] + eiglam1[i] *
-				((fmax(0.0, fmin(sbpar1 * a1[isb1[i]], fmax(a1[i],
-					fmin(a1[isb1[i]], sbpar2 * a1[i])))) +
-					fmin(0.0, fmax(sbpar1 * a1[isb1[i]], fmin(a1[i],
-						fmax(a1[isb1[i]], sbpar2 * a1[i]))))) *
+				((fmax(0.0, fmin(sbpar1 * a1[isb1[i]], fmax(a1[i], fmin(a1[isb1[i]], sbpar2 * a1[i])))) +
+					fmin(0.0, fmax(sbpar1 * a1[isb1[i]], fmin(a1[i], fmax(a1[isb1[i]], sbpar2 * a1[i]))))) *
 						(sgn1[i] - dtdx * eiglam1[i]));
+			isb2[i] = i - int(sgn2[i]);
+			ac22[i] = ac12[i] + eiglam2[i] *
+				((fmax(0.0, fmin(sbpar1 * a2[isb2[i]], fmax(a2[i], fmin(a2[isb2[i]], sbpar2 * a2[i])))) +
+					fmin(0.0, fmax(sbpar1 * a2[isb2[i]], fmin(a2[i], fmax(a2[isb2[i]], sbpar2 * a2[i]))))) *
+						(sgn2[i] - dtdx * eiglam2[i]));
+			isb3[i] = i - int(sgn3[i]);
+			ac23[i] = ac13[i] + eiglam3[i] *
+				((fmax(0.0, fmin(sbpar1 * a3[isb3[i]], fmax(a3[i], fmin(a3[isb3[i]], sbpar2 * a3[i])))) +
+					fmin(0.0, fmax(sbpar1 * a3[isb3[i]], fmin(a3[i], fmax(a3[isb3[i]], sbpar2 * a3[i]))))) *
+						(sgn3[i] - dtdx * eiglam3[i]));
 		}
 
 		// calculate the final fluxes
 		if (i > 0) {
-			d_f1[i] = 0.5 * (fl[i][0] + fr[i][0] + ac2[i][0]
-				+ ac2[i][1] + ac2[i][2]);
-			d_f2[i] = 0.5 * (fl[i][1] + fr[i][1] +
-				eiglam[i][0] * ac2[i][0] + eiglam[i][1] * ac2[i][1] +
-				eiglam[i][2] * ac2[i][2]);
-			d_f3[i] = 0.5 * (fl[i][2] + fr[i][2] +
-				(htilde[i] - utilde[i] * vsc[i]) * ac2[i][0] +
-				absvt[i] * ac2[i][1] +
-				(htilde[i] + utilde[i] * vsc[i]) * ac2[i][2]);
+			d_f1[i] = 0.5 * (fl1[i] + fr1[i] + ac21[i] + ac22[i] + ac23[i]);
+			d_f2[i] = 0.5 * (fl2[i] + fr2[i] + eiglam1[i] * ac21[i]
+				+ eiglam2[i] * ac22[i] + eiglam3[i] * ac23[i]);
+			d_f3[i] = 0.5 * (fl3[i] + fr3[i] + (htilde[i] - utilde[i] * vsc[i]) * ac21[i]
+				+ absvt[i] * ac22[i] + (htilde[i] + utilde[i] * vsc[i]) * ac23[i]);
 		}
-		/**/// }}}
-
+		
+		/*/
 		// update U (debug)
 		if (i > 0) {
-			d_u1[i] = sgn1[i];
-			d_u2[i] = sgn2[i];
-			d_u3[i] = sgn3[i];
+			d_u1[i] = d_f1[i];
+			d_u2[i] = d_f2[i];
+			d_u3[i] = d_f3[i];
 		}
 
 		// update U
 		/*/
 		if (i > 0) {
-			d_u1[j] -= *d_tau / *d_h * (d_f1[j + 1] - d_f1[j]);
-			d_u2[j] -= *d_tau / *d_h * (d_f2[j + 1] - d_f2[j]);
-			d_u3[j] -= *d_tau / *d_h * (d_f3[j + 1] - d_f3[j]);
+			d_u1[i] -= *d_tau / *d_h * (d_f1[i + 1] - d_f1[i]);
+			d_u2[i] -= *d_tau / *d_h * (d_f2[i + 1] - d_f2[i]);
+			d_u3[i] -= *d_tau / *d_h * (d_f3[i + 1] - d_f3[i]);
 		}
 		/**/
 

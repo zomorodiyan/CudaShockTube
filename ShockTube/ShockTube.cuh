@@ -46,8 +46,14 @@ public:
 
 	// device data members
 	double *d_h, *d_length, *d_gama, *d_cfl, *d_nu, *d_tau, *d_t;
-	double *d_u1, *d_u2, *d_u3, *d_f1, *d_f2, *d_f3, *d_vol, *d_cMax, *d_u1Temp, *d_u2Temp, *d_u3Temp;
+	double *d_u1, *d_u2, *d_u3, *d_f1, *d_f2, *d_f3, *d_vol, *d_cMax;
 	int size = nbrOfGrids * sizeof(int);
+		// just used in Lax-Wendroff step
+	double *d_u1Temp, *d_u2Temp, *d_u3Temp;
+		// just used in Roe and pike step
+	double *w1,*w2,*w3,*w4, *fc1,*fc2,*fc3, *fr1,*fr2,*fr3, *fl1,*fl2,*fl3, *fludif1,*fludif2,*fludif3,
+		*rsumr, *utilde, *htilde, *uvdif, *absvt, *ssc, *vsc,
+		*eiglam1,*eiglam2,*eiglam3, *sgn1,*sgn2,*sgn3, *isb1,*isb2,*isb3, *a1,*a2,*a3, *ac11,*ac12,*ac13, *ac21,*ac22,*ac23;
 
 	// Calculate and update cMax
 	void hostUpdateCMax();
@@ -108,7 +114,7 @@ __global__ void updateTau(const int nbrOfGrids, const double *d_u1,
 	const double *d_u2, const double *d_u3, const double *d_gama,
 	double *d_cMax, const double *d_h, const double *d_cfl, double *d_tau);
 
-// used in laxWendroffStep
+// used in laxWendroffStep 
 __device__ void updateFlux(const int nbrOfGrids, const double *d_u1, const double *d_u2,
 		const double *d_u3, double *d_f1, double *d_f2, double *d_f3, const double *d_gama);
 
@@ -130,6 +136,18 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
 	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);
 
+// used in RoeStep
+__device__ void MainPart(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 
+	const double *d_tau, const double *d_h, const double *d_gama);
+
 __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
-	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
-	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);
+	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 
+	const double *d_tau, const double *d_h, const double *d_gama,
+	double *w1,double *w2,double *w3,double *w4, double *fc1,double *fc2,double *fc3,
+	double *fr1,double *fr2,double *fr3, double *fl1,double *fl2,double *fl3,
+	double *fludif1,double *fludif2,double *fludif3,
+	double *rsumr, double *utilde, double *htilde, double *uvdif, double *absvt, double *ssc, double *vsc,
+	double *eiglam1,double *eiglam2,double *eiglam3, double *sgn1,double *sgn2,double *sgn3,
+	double *isb1,double *isb2,double *isb3, double *a1,double *a2,double *a3,
+	double *ac11,double *ac12,double *ac13, double *ac21,double *ac22,double *ac23);

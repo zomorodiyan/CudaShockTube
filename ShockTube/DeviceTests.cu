@@ -3,9 +3,9 @@
 #include <string>
 #include "ShockTube.cuh"
 
-#define fail " \033[1;31m"
-#define pass " \033[1;32m"
-#define yellow " \033[1;33m"
+#define fail "\033[1;31m"
+#define pass "\033[1;32m"
+#define yellow "\033[1;33m"
 #define reset "\033[0m"
 #define cudaErrorCheck(call)                                \
 {                                                           \
@@ -91,18 +91,34 @@ void ShockTube::DeviceTest04() {
 	nbrOfGrids = 10;
 	allocDeviceMemory();
 	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
-	RoeStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, 
-		d_f1, d_f2, d_f3, d_tau, d_h, d_gama);
+	RoeStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_f1, d_f2, d_f3, d_tau, d_h, d_gama,
+	w1,w2,w3,w4, fc1,fc2,fc3, fr1,fr2,fr3, fl1,fl2,fl3, fludif1,fludif2,fludif3,
+	rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
+	eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
 	allocHostMemory();
+
+	initHostMemory(); // debug
+	hostRoeStep(); // debug
+	std::cout.precision(15); // debug
+
+	std::cout << pass << "\nHost values\n";
+	std::cout << "u1[4]: " << u1[4] << "\tu2[4]: " << u2[4] << "\tu3[4]: " << u3[4] // debug
+		<< "\tu1[5]: " << u1[5] << "\tu2[5]: " << u2[5] << "\tu3[5]: " << u3[5] << reset << std::endl; // debug
+
 	copyDeviceToHost(nbrOfGrids);
+	std::cout << yellow << "Device values\n";
+	std::cout << "u1[4]: " << u1[4] << "\tu2[4]: " << u2[4] << "\tu3[4]: " << u3[4] // debug
+		<< "\tu1[5]: " << u1[5] << "\tu2[5]: " << u2[5] << "\tu3[5]: " << u3[5] << reset << std::endl; // debug
+//	std::cout << pass << "u1[4]: 0.702848465455315" << "u2[4]: 0.342287473165049" << "u3[4]: 1.514301621685751" // debug
+//		<< "u1[5]: 0.422151534544684" << "u2[5]: 0.34228747316504" << "u3[5]: 1.235698378314249"  << reset << std::endl; // debug
+
 	freeDeviceMemory();
+
+
 	double eps = 1e-14;
-	/*/
 	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
 		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
 		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
-	/**/
-	if (true)
 		std::cout << pass << test << reset << std::endl;
 	else
 		std::cout << fail << test << reset << std::endl;

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <iostream>
 #include "ShockTube.cuh"
+#include <algorithm> // in order to use std::max and std::min
 
 
 #define fail "\033[1;31m"
@@ -16,6 +17,10 @@
     assert(0);                                              \
   }                                                         \
 }
+	// define const values for Roe step
+	#define tiny 1e-30
+	#define sbpar1 2.0
+	#define sbpar2 2.0
 // Wrap device CUDA calls with cucheck_err as in the following example.
 // cudaErrorCheck(cudaGetLastError());
 
@@ -26,9 +31,6 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&d_u1, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_u2, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_u3, size));
-	cudaErrorCheck(cudaMalloc((void **)&d_u1Temp, size));
-	cudaErrorCheck(cudaMalloc((void **)&d_u2Temp, size));
-	cudaErrorCheck(cudaMalloc((void **)&d_u3Temp, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_f1, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_f2, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_f3, size));
@@ -41,6 +43,52 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&d_tau, sizeof(double)));
 	cudaErrorCheck(cudaMalloc((void **)&d_cMax, sizeof(double)));
 	cudaErrorCheck(cudaMalloc((void **)&d_t, sizeof(double)));
+		// only used in Lax-Wendroff step
+	cudaErrorCheck(cudaMalloc((void **)&d_u1Temp, size));
+	cudaErrorCheck(cudaMalloc((void **)&d_u2Temp, size));
+	cudaErrorCheck(cudaMalloc((void **)&d_u3Temp, size));
+		// only used in Roe step
+	cudaErrorCheck(cudaMalloc((void **)&w1, size));
+	cudaErrorCheck(cudaMalloc((void **)&w2, size));
+	cudaErrorCheck(cudaMalloc((void **)&w3, size));
+	cudaErrorCheck(cudaMalloc((void **)&w4, size));
+	cudaErrorCheck(cudaMalloc((void **)&fc1, size));
+	cudaErrorCheck(cudaMalloc((void **)&fc2, size));
+	cudaErrorCheck(cudaMalloc((void **)&fc3, size));
+	cudaErrorCheck(cudaMalloc((void **)&fr1, size));
+	cudaErrorCheck(cudaMalloc((void **)&fr2, size));
+	cudaErrorCheck(cudaMalloc((void **)&fr3, size));
+	cudaErrorCheck(cudaMalloc((void **)&fl1, size));
+	cudaErrorCheck(cudaMalloc((void **)&fl2, size));
+	cudaErrorCheck(cudaMalloc((void **)&fl3, size));
+	cudaErrorCheck(cudaMalloc((void **)&fludif1, size));
+	cudaErrorCheck(cudaMalloc((void **)&fludif2, size));
+	cudaErrorCheck(cudaMalloc((void **)&fludif3, size));
+	cudaErrorCheck(cudaMalloc((void **)&eiglam1, size));
+	cudaErrorCheck(cudaMalloc((void **)&eiglam2, size));
+	cudaErrorCheck(cudaMalloc((void **)&eiglam3, size));
+	cudaErrorCheck(cudaMalloc((void **)&sgn1, size));
+	cudaErrorCheck(cudaMalloc((void **)&sgn2, size));
+	cudaErrorCheck(cudaMalloc((void **)&sgn3, size));
+	cudaErrorCheck(cudaMalloc((void **)&isb1, size));
+	cudaErrorCheck(cudaMalloc((void **)&isb2, size));
+	cudaErrorCheck(cudaMalloc((void **)&isb3, size));
+	cudaErrorCheck(cudaMalloc((void **)&a1, size));
+	cudaErrorCheck(cudaMalloc((void **)&a2, size));
+	cudaErrorCheck(cudaMalloc((void **)&a3, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac11, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac12, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac13, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac21, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac22, size));
+	cudaErrorCheck(cudaMalloc((void **)&ac23, size));
+	cudaErrorCheck(cudaMalloc((void **)&rsumr, size));
+	cudaErrorCheck(cudaMalloc((void **)&utilde, size));
+	cudaErrorCheck(cudaMalloc((void **)&htilde, size));
+	cudaErrorCheck(cudaMalloc((void **)&uvdif, size));
+	cudaErrorCheck(cudaMalloc((void **)&absvt, size));
+	cudaErrorCheck(cudaMalloc((void **)&ssc, size));
+	cudaErrorCheck(cudaMalloc((void **)&vsc, size));
 }
 
 // Free allocated space for device copies of the variables
@@ -48,9 +96,6 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(d_u1));
 	cudaErrorCheck(cudaFree(d_u2));
 	cudaErrorCheck(cudaFree(d_u3));
-	cudaErrorCheck(cudaFree(d_u1Temp));
-	cudaErrorCheck(cudaFree(d_u2Temp));
-	cudaErrorCheck(cudaFree(d_u3Temp));
 	cudaErrorCheck(cudaFree(d_f1));
 	cudaErrorCheck(cudaFree(d_f2));
 	cudaErrorCheck(cudaFree(d_f3));
@@ -62,6 +107,29 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(d_nu));
 	cudaErrorCheck(cudaFree(d_tau));
 	cudaErrorCheck(cudaFree(d_cMax));
+	// only used in Lax-Wendroff step
+	cudaErrorCheck(cudaFree(d_u1Temp));
+	cudaErrorCheck(cudaFree(d_u2Temp));
+	cudaErrorCheck(cudaFree(d_u3Temp));
+	// only used in Roe step
+	cudaErrorCheck(cudaFree(w1)); cudaErrorCheck(cudaFree(w2)); cudaErrorCheck(cudaFree(w3));cudaErrorCheck(cudaFree(w4));
+	cudaErrorCheck(cudaFree(fc1)); cudaErrorCheck(cudaFree(fc2)); cudaErrorCheck(cudaFree(fc3));
+	cudaErrorCheck(cudaFree(fr1)); cudaErrorCheck(cudaFree(fr2)); cudaErrorCheck(cudaFree(fr3));
+	cudaErrorCheck(cudaFree(fl1)); cudaErrorCheck(cudaFree(fl2)); cudaErrorCheck(cudaFree(fl3));
+	cudaErrorCheck(cudaFree(fludif1)); cudaErrorCheck(cudaFree(fludif2)); cudaErrorCheck(cudaFree(fludif3));
+	cudaErrorCheck(cudaFree(eiglam1)); cudaErrorCheck(cudaFree(eiglam2)); cudaErrorCheck(cudaFree(eiglam3));
+	cudaErrorCheck(cudaFree(sgn1)); cudaErrorCheck(cudaFree(sgn2)); cudaErrorCheck(cudaFree(sgn3));
+	cudaErrorCheck(cudaFree(isb1)); cudaErrorCheck(cudaFree(isb2)); cudaErrorCheck(cudaFree(isb3));
+	cudaErrorCheck(cudaFree(a1)); cudaErrorCheck(cudaFree(a2)); cudaErrorCheck(cudaFree(a3));
+	cudaErrorCheck(cudaFree(ac11)); cudaErrorCheck(cudaFree(ac12)); cudaErrorCheck(cudaFree(ac13));
+	cudaErrorCheck(cudaFree(ac21)); cudaErrorCheck(cudaFree(ac22)); cudaErrorCheck(cudaFree(ac23));
+	cudaErrorCheck(cudaFree(rsumr));
+	cudaErrorCheck(cudaFree(utilde));
+	cudaErrorCheck(cudaFree(htilde));
+	cudaErrorCheck(cudaFree(uvdif));
+	cudaErrorCheck(cudaFree(absvt));
+	cudaErrorCheck(cudaFree(ssc));
+	cudaErrorCheck(cudaFree(vsc));
 }
 
 // calculate and update value of d_cMax
@@ -130,7 +198,7 @@ void ShockTube::copyDeviceToHost(const int nbrOfGrids) {
 	cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-// copy flux from device to host (for debegging purpose)
+// copy flux from device to host (debeg)
 void ShockTube::copyFluxFromDeviceToHost(const int nbrOfGrids) {
 	int size = nbrOfGrids * sizeof(double);
 	cudaErrorCheck(cudaMemcpy(f1, d_f1, size, cudaMemcpyDeviceToHost));
@@ -261,8 +329,161 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 }
 
 
-__global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
-	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
-	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama) {
+__device__ void MainPart(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3,
+	const double *d_tau, const double *d_h, const double *d_gama) {
 	;
+}
+
+__global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
+	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 
+	const double *d_tau, const double *d_h, const double *d_gama,
+	double *w1,double *w2,double *w3,double *w4, double *fc1,double *fc2,double *fc3,
+	double *fr1,double *fr2,double *fr3, double *fl1,double *fl2,double *fl3,
+	double *fludif1,double *fludif2,double *fludif3,
+	double *rsumr, double *utilde, double *htilde, double *uvdif, double *absvt, double *ssc, double *vsc,
+	double *eiglam1,double *eiglam2,double *eiglam3, double *sgn1,double *sgn2,double *sgn3,
+	double *isb1,double *isb2,double *isb3, double *a1,double *a2,double *a3,
+	double *ac11,double *ac12,double *ac13, double *ac21,double *ac22,double *ac23) {
+
+
+	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	int stride = blockDim.x;
+	for (int i = index; i < nbrOfGrids; i += stride) {
+
+		// find parameter vector w
+		if (i > 0) {
+			w1[i] = sqrt(d_vol[i] * d_u1[i]);
+			w2[i] = w1[i] * d_u2[i] / d_u1[i];
+			w4[i] = (*d_gama - 1) * (d_u3[i] - 0.5 * d_u2[i] * d_u2[i] / d_u1[i]);
+			w3[i] = w1[i] * (d_u3[i] + w4[i]) / d_u1[i];
+		}
+
+		// calculate the fluxes at the cell center
+		if (i > 0) {
+			fc1[i] = w1[i] * w2[i];
+			fc2[i] = w2[i] * w2[i] + d_vol[i] * w4[i];
+			fc3[i] = w2[i] * w3[i];
+		}
+
+		// calculate the fes at the cell walls
+		// assuming constant primitive variables
+		if (i > 0) {
+			fl1[i] = fc1[i - 1]; fr1[i] = fc1[i];
+			fl2[i] = fc2[i - 1]; fr2[i] = fc2[i];
+			fl3[i] = fc3[i - 1]; fr3[i] = fc1[i];
+		}
+
+		// calculate the flux differences at the cell walls
+		if (i > 0) {
+			fludif1[i] = fr1[i] - fl1[i];
+			fludif2[i] = fr2[i] - fl2[i];
+			fludif3[i] = fr3[i] - fl3[i];
+		}
+
+		// calculate the tilded state variables = mean values at the interfaces
+		if (i > 0) {
+			rsumr[i] = 1 / (w1[i - 1] + w1[i]);
+
+			utilde[i] = (w2[i - 1] + w2[i]) * rsumr[i];
+			htilde[i] = (w3[i - 1] + w3[i]) * rsumr[i];
+
+			absvt[i] = 0.5 * utilde[i] * utilde[i];
+			uvdif[i] = utilde[i] * fludif2[i];
+
+			ssc[i] = (*d_gama - 1) * (htilde[i] - absvt[i]);
+			if (ssc[i] > 0.0)
+				vsc[i] = sqrt(ssc[i]);
+			else {
+				vsc[i] = sqrt(abs(ssc[i]));
+			}
+		}
+
+		// calculate the eigenvalues and projection coefficients for each
+		// eigenvector
+		if (i > 0) {
+			eiglam1[i] = utilde[i] - vsc[i];
+			eiglam2[i] = utilde[i];
+			eiglam3[i] = utilde[i] + vsc[i];
+			sgn1[i] = eiglam1[i] < 0.0 ? -1 : 1;
+			sgn2[i] = eiglam2[i] < 0.0 ? -1 : 1;
+			sgn3[i] = eiglam3[i] < 0.0 ? -1 : 1;
+			a1[i] = 0.5 * ((*d_gama - 1) * (absvt[i] * fludif1[i] + fludif3[i]
+				- uvdif[i]) - vsc[i] * (fludif2[i] - utilde[i]
+					* fludif1[i])) / ssc[i];
+			a2[i] = (*d_gama - 1) * ((htilde[i] - 2 * absvt[i]) * fludif1[i]
+				+ uvdif[i] - fludif3[i]) / ssc[i];
+			a3[i] = 0.5 * ((*d_gama - 1) * (absvt[i] * fludif1[i] + fludif3[i]
+				- uvdif[i]) + vsc[i] * (fludif2[i] - utilde[i]
+					* fludif1[i])) / ssc[i];
+		}
+
+		// divide the projection coefficients by the wave speeds
+		// to evade expansion correction
+		if (i > 0) {
+			a1[i] /= eiglam1[i] + tiny;
+			a2[i] /= eiglam2[i] + tiny;
+			a3[i] /= eiglam3[i] + tiny;
+		}
+
+		// calculate the first order projection coefficients ac1
+		if (i > 0) {
+			ac11[i] = -sgn1[i] * a1[i] * eiglam1[i];
+			ac12[i] = -sgn2[i] * a2[i] * eiglam2[i];
+			ac13[i] = -sgn3[i] * a3[i] * eiglam3[i];
+		}
+
+		// apply the 'superbee' flux correction to made 2nd order projection
+		// coefficients ac2
+		ac21[1] = ac11[1];
+		ac21[nbrOfGrids - 1] = ac11[nbrOfGrids - 1];
+		ac22[1] = ac12[1];
+		ac22[nbrOfGrids - 1] = ac12[nbrOfGrids - 1];
+		ac23[1] = ac13[1];
+		ac23[nbrOfGrids - 1] = ac13[nbrOfGrids - 1];
+
+
+		/*/ {{{ // this part needs thinking. mmm...
+		double dtdx = *d_tau / *d_h;
+		if ((i > 1) && (i < nbrOfGrids - 1)) {
+			isb1[i] = i - int(sgn1[i]);
+			ac21[i] = ac11[i] + eiglam1[i] *
+				((fmax(0.0, fmin(sbpar1 * a1[isb1[i]], fmax(a1[i],
+					fmin(a1[isb1[i]], sbpar2 * a1[i])))) +
+					fmin(0.0, fmax(sbpar1 * a1[isb1[i]], fmin(a1[i],
+						fmax(a1[isb1[i]], sbpar2 * a1[i]))))) *
+						(sgn1[i] - dtdx * eiglam1[i]));
+		}
+
+		// calculate the final fluxes
+		if (i > 0) {
+			d_f1[i] = 0.5 * (fl[i][0] + fr[i][0] + ac2[i][0]
+				+ ac2[i][1] + ac2[i][2]);
+			d_f2[i] = 0.5 * (fl[i][1] + fr[i][1] +
+				eiglam[i][0] * ac2[i][0] + eiglam[i][1] * ac2[i][1] +
+				eiglam[i][2] * ac2[i][2]);
+			d_f3[i] = 0.5 * (fl[i][2] + fr[i][2] +
+				(htilde[i] - utilde[i] * vsc[i]) * ac2[i][0] +
+				absvt[i] * ac2[i][1] +
+				(htilde[i] + utilde[i] * vsc[i]) * ac2[i][2]);
+		}
+		/**/// }}}
+
+		// update U (debug)
+		if (i > 0) {
+			d_u1[i] = sgn1[i];
+			d_u2[i] = sgn2[i];
+			d_u3[i] = sgn3[i];
+		}
+
+		// update U
+		/*/
+		if (i > 0) {
+			d_u1[j] -= *d_tau / *d_h * (d_f1[j + 1] - d_f1[j]);
+			d_u2[j] -= *d_tau / *d_h * (d_f2[j + 1] - d_f2[j]);
+			d_u3[j] -= *d_tau / *d_h * (d_f3[j + 1] - d_f3[j]);
+		}
+		/**/
+
+	}
 }

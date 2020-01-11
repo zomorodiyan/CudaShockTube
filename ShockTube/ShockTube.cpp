@@ -220,7 +220,7 @@ void ShockTube::hostRoeStep()
 		w[i][3] = (gama - 1) * (u3[i] - 0.5 * u2[i] * u2[i] / u1[i]);
 		w[i][2] = w[i][0] * (u3[i] + w[i][3]) / u1[i];
 	}
-
+	// {{{
 	// calculate the fluxes at the cell center
 	for (int i = 0; i <= nbrOfGrids - 1; i++) {
 		fc[i][0] = w[i][0] * w[i][1];
@@ -321,7 +321,8 @@ void ShockTube::hostRoeStep()
 			absvt[i] * ac2[i][1] +
 			(htilde[i] + utilde[i] * vsc[i]) * ac2[i][2]);
 	}
-	/*/
+	// }}}
+	/*/ {{{
 	// calculate test variable for negative pressure check
 	for (int i = 1; i <= nbrOfGrids - 2; i++) {
 		ptest[i] = h * vol[i] * u2[i] +
@@ -366,13 +367,25 @@ void ShockTube::hostRoeStep()
 				- ptest[i] * ptest[i];
 		}
 	}
+	/**/// }}}
+
+
 	/**/
+	// update U debug
+	for (int j = 1; j < nbrOfGrids - 1; j++) {
+		u1[j] = sgn[j][0];
+		u2[j] = sgn[j][1];
+		u3[j] = sgn[j][2];
+	}
+
+	/*/
 	// update U
 	for (int j = 1; j < nbrOfGrids - 1; j++) {
 		u1[j] -= tau / h * (f1[j + 1] - f1[j]);
 		u2[j] -= tau / h * (f2[j + 1] - f2[j]);
 		u3[j] -= tau / h * (f3[j + 1] - f3[j]);
 	}
+	/**/
 
 	// free temporary arrays
 	for (int i = 0; i < nbrOfGrids; i++) {

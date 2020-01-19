@@ -10,9 +10,11 @@ public:
 
 	// Host Tests
 	void HostTest01(); void HostTest02(); void HostTest03(); void HostTest04();
+	void LaxHost(); void RoeHost();
 
 	// Device Tests
-	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); void DeviceTest04();
+	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); void DeviceTest04(); void DeviceTest05();
+	void LaxDevice(); void RoeDevice();
 
 	// Allocate space for host copies of the variables
 	void allocHostMemory();
@@ -48,9 +50,9 @@ public:
 	double *d_h, *d_length, *d_gama, *d_cfl, *d_nu, *d_tau, *d_t;
 	double *d_u1, *d_u2, *d_u3, *d_f1, *d_f2, *d_f3, *d_vol, *d_cMax;
 	int size = nbrOfGrids * sizeof(int);
-		// just used in Lax-Wendroff step
+	// just used in Lax-Wendroff step
 	double *d_u1Temp, *d_u2Temp, *d_u3Temp;
-		// just used in Roe and pike step
+	// just used in Roe and pike step
 	double *w1,*w2,*w3,*w4, *fc1,*fc2,*fc3, *fr1,*fr2,*fr3, *fl1,*fl2,*fl3, *fludif1,*fludif2,*fludif3,
 		*rsumr, *utilde, *htilde, *uvdif, *absvt, *ssc, *vsc,
 		*eiglam1,*eiglam2,*eiglam3, *sgn1,*sgn2,*sgn3, *a1, *a2, *a3, *ac11,*ac12,*ac13, *ac21,*ac22,*ac23;
@@ -136,11 +138,6 @@ __device__ void updateU(const int nbrOfGrids, double *d_u1, double *d_u2,
 __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *d_u3, double *d_u1Temp, double *d_u2Temp, double *d_u3Temp,
 	double *d_f1, double *d_f2, double *d_f3, const double *d_tau, const double *d_h, const double *d_gama);
-
-// used in RoeStep
-__device__ void MainPart(const int nbrOfGrids, double *d_u1, double *d_u2,
-	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 
-	const double *d_tau, const double *d_h, const double *d_gama);
 
 __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 

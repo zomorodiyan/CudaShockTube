@@ -12,10 +12,13 @@ int main() {
 	st.HostTest02();
 	st.HostTest03();
 	st.HostTest04();
+	st.RoeHost();
+	st.LaxHost();
 	st.DeviceTest01();
 	st.DeviceTest02();
 	st.DeviceTest03();
 	st.DeviceTest04();
+	st.LaxDevice();
 	return 0;
 }
 /*/

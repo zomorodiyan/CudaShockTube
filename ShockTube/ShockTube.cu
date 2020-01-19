@@ -5,7 +5,6 @@
 #include "ShockTube.cuh"
 #include <algorithm> // in order to use std::max and std::min
 
-
 #define fail "\033[1;31m"
 #define reset "\033[0m"
 #define cudaErrorCheck(call)                                \
@@ -17,13 +16,8 @@
     assert(0);                                              \
   }                                                         \
 }
-	// define const values for Roe step
-	#define tiny 1e-30
-	#define sbpar1 2.0
-	#define sbpar2 2.0
 // Wrap device CUDA calls with cucheck_err as in the following example.
 // cudaErrorCheck(cudaGetLastError());
-
 
 // Allocate space for device copies of the variables
 void ShockTube::allocDeviceMemory() {
@@ -48,6 +42,7 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&d_u2Temp, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_u3Temp, size));
 		// only used in Roe step
+	/**/
 	cudaErrorCheck(cudaMalloc((void **)&w1, size));
 	cudaErrorCheck(cudaMalloc((void **)&w2, size));
 	cudaErrorCheck(cudaMalloc((void **)&w3, size));
@@ -89,6 +84,7 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&isb1, nbrOfGrids * sizeof(int)));
 	cudaErrorCheck(cudaMalloc((void **)&isb2, nbrOfGrids * sizeof(int)));
 	cudaErrorCheck(cudaMalloc((void **)&isb3, nbrOfGrids * sizeof(int)));
+	/**/
 }
 
 // Free allocated space for device copies of the variables
@@ -111,7 +107,7 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(d_u1Temp));
 	cudaErrorCheck(cudaFree(d_u2Temp));
 	cudaErrorCheck(cudaFree(d_u3Temp));
-	// only used in Roe step
+	// only used in Roe step /**/
 	cudaErrorCheck(cudaFree(w1)); cudaErrorCheck(cudaFree(w2)); cudaErrorCheck(cudaFree(w3));cudaErrorCheck(cudaFree(w4));
 	cudaErrorCheck(cudaFree(fc1)); cudaErrorCheck(cudaFree(fc2)); cudaErrorCheck(cudaFree(fc3));
 	cudaErrorCheck(cudaFree(fr1)); cudaErrorCheck(cudaFree(fr2)); cudaErrorCheck(cudaFree(fr3));
@@ -130,18 +126,19 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(absvt));
 	cudaErrorCheck(cudaFree(ssc));
 	cudaErrorCheck(cudaFree(vsc));
+	/**/
 }
 
 // calculate and update value of d_cMax
-__device__ void updateCMax(const int nbrOfGrids, const double *d_u1,
-	const double *d_u2, const double *d_u3, const double *d_gama,
-	double *d_cMax) {
-	*d_cMax = 0;
-	int index = blockIdx.x * blockDim.x + threadIdx.x;
+__device__ void updateCMax(const int nbrOfGrids, const double *d_u1, const double *d_u2, const double *d_u3, const double *d_gama, double *d_cMax) { *d_cMax = 0; int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 	double ro, p, u;
+	double u1, u2, u3; // debug
 	__shared__ double c;
 	for (int i = index; i < nbrOfGrids; i += stride){
+		u1 = d_u1[i];
+		u2 = d_u2[i];
+		u3 = d_u3[i];
 		if (d_u1[i] == 0)
 			continue;
 		ro = d_u1[i];
@@ -168,12 +165,13 @@ __global__ void initDeviceMemory(const int nbrOfGrids, double *d_u1,
 	int stride = blockDim.x;
 	for(int i = index; i < nbrOfGrids; i+= stride){
 		double e, ro, p, u = 0;
-		if (index < nbrOfGrids){
-			if (index >= int(nbrOfGrids / 2)) { ro = 0.125, p = 0.1; }
+		if (i < nbrOfGrids){
+			if (i >= int(nbrOfGrids / 2)) { ro = 0.125, p = 0.1; }
 			else { ro = 1, p = 1; }
 			e = p / (*d_gama - 1) + ro * u * u / 2;
 			d_u1[i] = ro;
 			d_u2[i] = ro * u;
+			d_u3[i] = e;
 			d_u3[i] = e;
 			d_vol[i] = 1;
 		}
@@ -329,11 +327,10 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 }
 
 
-__device__ void MainPart(const int nbrOfGrids, double *d_u1, double *d_u2,
-	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3,
-	const double *d_tau, const double *d_h, const double *d_gama) {
-	;
-}
+// used in RoeStep
+	#define tiny 1e-30
+	#define sbpar1 2.0
+	#define sbpar2 2.0
 
 __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *d_u3, const double *d_vol, double *d_f1, double *d_f2, double *d_f3, 

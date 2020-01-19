@@ -21,7 +21,11 @@ void ShockTube::allocHostMemory() {
 // Calculate and update value of cMax
 void ShockTube::hostUpdateCMax() {
 	double ro, u, p, c; cMax = 0;
+	double u1d, u2d, u3d;
 	for (int i = 0; i < nbrOfGrids; i++) {
+		u1d = u1[i];
+		u2d = u2[i];
+		u3d = u3[i];
 		if (u1[i] == 0)
 			continue;
 		ro = u1[i];

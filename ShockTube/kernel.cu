@@ -8,17 +8,18 @@
 
 int main() {
 	ShockTube st;
-	st.HostTest01();
-	st.HostTest02();
-	st.HostTest03();
+	//st.HostTest01();
+	//st.HostTest02();
+	//st.HostTest03();
 	st.HostTest04();
-	st.RoeHost();
-	st.LaxHost();
-	st.DeviceTest01();
-	st.DeviceTest02();
-	st.DeviceTest03();
+	//st.LaxHost();
+	//st.RoeHost();
+	//st.DeviceTest01();
+	//st.DeviceTest02();
+	//st.DeviceTest03();
 	st.DeviceTest04();
-	st.LaxDevice();
+	//st.LaxDevice();
+	//st.RoeDevice();
 	return 0;
 }
 /*/

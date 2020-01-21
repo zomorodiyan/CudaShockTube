@@ -349,19 +349,15 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	for (int i = index; i < nbrOfGrids; i += stride) {
 
 		// find parameter vector w
-		if (i > 0) {
-			w1[i] = sqrt(d_vol[i] * d_u1[i]);
-			w2[i] = w1[i] * d_u2[i] / d_u1[i];
-			w4[i] = (*d_gama - 1) * (d_u3[i] - 0.5 * d_u2[i] * d_u2[i] / d_u1[i]);
-			w3[i] = w1[i] * (d_u3[i] + w4[i]) / d_u1[i];
-		}
+		w1[i] = sqrt(d_vol[i] * d_u1[i]);
+		w2[i] = w1[i] * d_u2[i] / d_u1[i];
+		w4[i] = (*d_gama - 1) * (d_u3[i] - 0.5 * d_u2[i] * d_u2[i] / d_u1[i]);
+		w3[i] = w1[i] * (d_u3[i] + w4[i]) / d_u1[i];
 
 		// calculate the fluxes at the cell center
-		if (i > 0) {
-			fc1[i] = w1[i] * w2[i];
-			fc2[i] = w2[i] * w2[i] + d_vol[i] * w4[i];
-			fc3[i] = w2[i] * w3[i];
-		}
+		fc1[i] = w1[i] * w2[i];
+		fc2[i] = w2[i] * w2[i] + d_vol[i] * w4[i];
+		fc3[i] = w2[i] * w3[i];
 
 		// calculate the fes at the cell walls
 		// assuming constant primitive variables
@@ -458,7 +454,6 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 					fmin(0.0, fmax(sbpar1 * a3[isb3[i]], fmin(a3[i], fmax(a3[isb3[i]], sbpar2 * a3[i]))))) *
 						(sgn3[i] - dtdx * eiglam3[i]));
 		}
-
 		// calculate the final fluxes
 		if (i > 0) {
 			d_f1[i] = 0.5 * (fl1[i] + fr1[i] + ac21[i] + ac22[i] + ac23[i]);
@@ -478,10 +473,12 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 
 		// update U
 		/*/
-		if (i > 0) {
+		if (i > 0 && i < nbrOfGrids - 1) {
 			d_u1[i] -= *d_tau / *d_h * (d_f1[i + 1] - d_f1[i]);
 			d_u2[i] -= *d_tau / *d_h * (d_f2[i + 1] - d_f2[i]);
 			d_u3[i] -= *d_tau / *d_h * (d_f3[i + 1] - d_f3[i]);
+			if (i == 9) {
+			}
 		}
 		/**/
 

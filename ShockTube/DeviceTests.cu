@@ -100,6 +100,8 @@ void ShockTube::DeviceTest04() {
 	allocHostMemory();
 	copyDeviceToHost(nbrOfGrids);
 	freeDeviceMemory();
+	std::cout << std::endl << "u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1] <<
+		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
 	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
 		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
 		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
@@ -164,5 +166,75 @@ void ShockTube::LaxDevice() {
 	}
 	myfile.close();
 	std::cout << blue << "solution: LaxDevice.dat" << reset << std::endl;
+	freeHostMemory();
+}
+
+// firt I have to correct the DeviceTest04: Roe Step
+void ShockTube::RoeDevice() {
+	std::cout << yellow << __func__ << reset;
+	nbrOfGrids = 10;
+	allocDeviceMemory();
+	allocHostMemory();
+	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	double tMax = 0.2; t = 0;
+	// decrease tau to not overshoot tMax 
+	cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
+	if (tau - tMax > eps) 
+		tau = tMax;
+	cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
+	int step = 1;
+	for(bool tMaxReached = false; tMaxReached==false; step++)
+	{
+		boundaryCondition<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3);
+		updateTau<<<1,1>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax, d_h, d_cfl, d_tau); 
+		// decrease tau to not overshoot tMax
+		cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
+		if (t + tau - tMax > -eps)
+		{ 
+			tau = tMax - t;
+			tMaxReached = true;
+		} 
+		cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
+		RoeStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_f1, d_f2, d_f3, d_tau, d_h, d_gama,
+			w1,w2,w3,w4, fc1,fc2,fc3, fr1,fr2,fr3, fl1,fl2,fl3, fludif1,fludif2,fludif3,
+			rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
+			eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
+		t += tau;
+		if (step == 1)
+		{
+			copyDeviceToHost(nbrOfGrids);
+			std::cout << std::endl << "u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
+				" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
+			if ((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
+				&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
+				&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
+				std::cout << pass << "first step solution " << reset;
+			else
+				std::cout << fail << "first step solution " << reset;
+		}
+	}
+	copyDeviceToHost(nbrOfGrids);
+	freeDeviceMemory();
+	std::ofstream myfile;
+	myfile.open("RoeDevice.dat");
+	myfile << "variables = x, rho, u, p, mo, e, et, T, c, M, h" << std::endl;
+	for (int i = 0; i < nbrOfGrids; i++) {
+		double rho = u1[i];
+		double u = u2[i] / rho;
+		double p = (u3[i] - rho * u * u / 2) * (gama - 1);
+		double m = u2[i]; // Momentum I think(?)
+		double e = u3[i];
+		//double e = p / (gama - 1) / rho; // is this line equivalent to the previous?
+		double E = p / (gama - 1.) + 0.5 * rho * u * u;
+		double T = p / rho;
+		double c = sqrt(gama * p / rho);
+		double M = u / c;
+		double h = e + p / rho;
+		double x = double(i) / double(nbrOfGrids);
+		myfile << x << " " << rho << " " << u << " " << p << " " << m << " " << e << " " << E 
+			<< " " << T << " " << c << " " << M << " " << h << "\n";
+	}
+	myfile.close();
+	std::cout << blue << "solution: RoeDevice.dat" << reset << std::endl;
 	freeHostMemory();
 }

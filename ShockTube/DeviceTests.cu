@@ -6,6 +6,7 @@
 #include <iomanip>      // std::setprecision
 
 #define coutPericision 30
+#define blockSize 256 
 #define eps 1e-14
 #define fail " \033[1;31m"
 #define pass " \033[1;32m"
@@ -100,8 +101,6 @@ void ShockTube::DeviceTest04() {
 	allocHostMemory();
 	copyDeviceToHost(nbrOfGrids);
 	freeDeviceMemory();
-	std::cout << std::endl << "u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1] <<
-		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
 	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
 		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
 		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
@@ -169,13 +168,28 @@ void ShockTube::LaxDevice() {
 	freeHostMemory();
 }
 
-// firt I have to correct the DeviceTest04: Roe Step
 void ShockTube::RoeDevice() {
 	std::cout << yellow << __func__ << reset;
-	nbrOfGrids = 10;
-	allocDeviceMemory();
+	nbrOfGrids = 101;
 	allocHostMemory();
-	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	allocDeviceMemory();
+	initDeviceMemory<<<1,blockSize>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	boundaryCondition<<<1,blockSize>>>(nbrOfGrids, d_u1, d_u2, d_u3);
+
+	/*/
+	copyDeviceToHost(nbrOfGrids);
+	std::cout << std::endl << " u1[0]: " << u1[0] << " u2[0]: " << u2[0] << " u3[0]: " << u3[0] <<
+		" u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1];
+	std::cout << std::endl << " u1[2]: " << u1[2] << " u2[2]: " << u2[2] << " u3[2]: " << u3[2] <<
+		" u1[3]: " << u1[3] << " u2[3]: " << u2[3] << " u3[3]: " << u3[3];
+	std::cout << std::endl << " u1[4]: " << u1[4] << " u2[4]: " << u2[4] << " u3[4]: " << u3[4] <<
+		" u1[5]: " << u1[5] << " u2[5]: " << u2[9] << " u3[5]: " << u3[5];
+	std::cout << std::endl << " u1[6]: " << u1[6] << " u2[6]: " << u2[6] << " u3[6]: " << u3[8] <<
+		" u1[7]: " << u1[7] << " u2[7]: " << u2[7] << " u3[7]: " << u3[7];
+	std::cout << std::endl << " u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
+		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
+	/**/
+
 	double tMax = 0.2; t = 0;
 	// decrease tau to not overshoot tMax 
 	cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
@@ -185,7 +199,36 @@ void ShockTube::RoeDevice() {
 	int step = 1;
 	for(bool tMaxReached = false; tMaxReached==false; step++)
 	{
-		boundaryCondition<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3);
+		RoeStep<<<1,blockSize>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_f1, d_f2, d_f3, d_tau, d_h, d_gama,
+			w1,w2,w3,w4, fc1,fc2,fc3, fr1,fr2,fr3, fl1,fl2,fl3, fludif1,fludif2,fludif3,
+			rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
+			eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
+		boundaryCondition<<<1,blockSize>>>(nbrOfGrids, d_u1, d_u2, d_u3);
+
+		if (step > 1)
+		{
+			copyDeviceToHost(nbrOfGrids);
+			std::cout << std::endl << " u1[0]: " << u1[0] << " u2[0]: " << u2[0] << " u3[0]: " << u3[0] <<
+				" u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1];
+			std::cout << std::endl << " u1[2]: " << u1[2] << " u2[2]: " << u2[2] << " u3[2]: " << u3[2] <<
+				" u1[3]: " << u1[3] << " u2[3]: " << u2[3] << " u3[3]: " << u3[3];
+			std::cout << std::endl << " u1[4]: " << u1[4] << " u2[4]: " << u2[4] << " u3[4]: " << u3[4] <<
+				" u1[5]: " << u1[5] << " u2[5]: " << u2[9] << " u3[5]: " << u3[5];
+			std::cout << std::endl << " u1[6]: " << u1[6] << " u2[6]: " << u2[6] << " u3[6]: " << u3[8] <<
+				" u1[7]: " << u1[7] << " u2[7]: " << u2[7] << " u3[7]: " << u3[7];
+			std::cout << std::endl << " u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
+				" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
+			/*/
+			if ((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
+				&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
+				&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
+				std::cout << pass << "first step solution " << reset;
+			else
+				std::cout << fail << "first step solution " << reset;
+			/**/
+		}
+
+		t += tau;
 		updateTau<<<1,1>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax, d_h, d_cfl, d_tau); 
 		// decrease tau to not overshoot tMax
 		cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
@@ -194,24 +237,9 @@ void ShockTube::RoeDevice() {
 			tau = tMax - t;
 			tMaxReached = true;
 		} 
+		if (step > 1)
+			std::cout << "t: " << t  << ", tau: " << tau << " | ";
 		cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
-		RoeStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_f1, d_f2, d_f3, d_tau, d_h, d_gama,
-			w1,w2,w3,w4, fc1,fc2,fc3, fr1,fr2,fr3, fl1,fl2,fl3, fludif1,fludif2,fludif3,
-			rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
-			eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
-		t += tau;
-		if (step == 1)
-		{
-			copyDeviceToHost(nbrOfGrids);
-			std::cout << std::endl << "u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
-				" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
-			if ((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
-				&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
-				&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
-				std::cout << pass << "first step solution " << reset;
-			else
-				std::cout << fail << "first step solution " << reset;
-		}
 	}
 	copyDeviceToHost(nbrOfGrids);
 	freeDeviceMemory();

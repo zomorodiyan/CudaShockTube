@@ -11,15 +11,15 @@ int main() {
 	//st.HostTest01();
 	//st.HostTest02();
 	//st.HostTest03();
-	st.HostTest04();
-	//st.LaxHost();
-	//st.RoeHost();
+	//st.HostTest04();
+	st.LaxHost();
+	st.RoeHost();
 	//st.DeviceTest01();
 	//st.DeviceTest02();
 	//st.DeviceTest03();
-	st.DeviceTest04();
-	//st.LaxDevice();
-	//st.RoeDevice();
+	//st.DeviceTest04();
+	st.LaxDevice();
+	st.RoeDevice();
 	return 0;
 }
 /*/

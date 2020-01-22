@@ -71,8 +71,6 @@ void ShockTube::HostTest04() {
 	allocHostMemory();
 	initHostMemory();
 	hostRoeStep();
-	std::cout << std::endl << "u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1] <<
-		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
 	if((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
 		&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
 		&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
@@ -130,18 +128,52 @@ void ShockTube::LaxHost() {
 
 void ShockTube::RoeHost() {
 	std::cout << yellow << __func__ << reset;
-	nbrOfGrids = 10;
+	nbrOfGrids = 101;
 	allocHostMemory();
 	initHostMemory();
 	hostBoundaryCondition();
+	/*/
+	std::cout << std::endl << " u1[0]: " << u1[0] << " u2[0]: " << u2[0] << " u3[0]: " << u3[0] <<
+		" u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1];
+	std::cout << std::endl << " u1[2]: " << u1[2] << " u2[2]: " << u2[2] << " u3[2]: " << u3[2] <<
+		" u1[3]: " << u1[3] << " u2[3]: " << u2[3] << " u3[3]: " << u3[3];
+	std::cout << std::endl << " u1[4]: " << u1[4] << " u2[4]: " << u2[4] << " u3[4]: " << u3[4] <<
+		" u1[5]: " << u1[5] << " u2[5]: " << u2[9] << " u3[5]: " << u3[5];
+	std::cout << std::endl << " u1[6]: " << u1[6] << " u2[6]: " << u2[6] << " u3[6]: " << u3[8] <<
+		" u1[7]: " << u1[7] << " u2[7]: " << u2[7] << " u3[7]: " << u3[7];
+	std::cout << std::endl << " u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
+		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
+	/**/
 	t = 0;
 	double tMax = 0.2;
 	int step = 1;
-	bool tMaxReached = false;
-	while (!tMaxReached)
+	for(bool tMaxReached = false; !tMaxReached; step++)
 	{
 		hostRoeStep();
 		hostBoundaryCondition();
+
+		if (step > 1)
+		{
+	std::cout << std::endl << " u1[0]: " << u1[0] << " u2[0]: " << u2[0] << " u3[0]: " << u3[0] <<
+		" u1[1]: " << u1[1] << " u2[1]: " << u2[1] << " u3[1]: " << u3[1];
+	std::cout << std::endl << " u1[2]: " << u1[2] << " u2[2]: " << u2[2] << " u3[2]: " << u3[2] <<
+		" u1[3]: " << u1[3] << " u2[3]: " << u2[3] << " u3[3]: " << u3[3];
+	std::cout << std::endl << " u1[4]: " << u1[4] << " u2[4]: " << u2[4] << " u3[4]: " << u3[4] <<
+		" u1[5]: " << u1[5] << " u2[5]: " << u2[9] << " u3[5]: " << u3[5];
+	std::cout << std::endl << " u1[6]: " << u1[6] << " u2[6]: " << u2[6] << " u3[6]: " << u3[8] <<
+		" u1[7]: " << u1[7] << " u2[7]: " << u2[7] << " u3[7]: " << u3[7];
+	std::cout << std::endl << " u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
+		" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
+			/*/
+			if ((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
+				&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
+				&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
+				std::cout << pass << "Host first step solution " << reset;
+			else
+				std::cout << fail << "Host first step solution " << reset;
+			/**/
+		}
+
 		t += tau;
 		hostUpdateTau();
 		// decrease tau to not overshoot tMax (works for tMax >= tau(initial value))
@@ -149,18 +181,8 @@ void ShockTube::RoeHost() {
 			tau = tMax - t;
 			tMaxReached = true;
 		}
-		if (step == 1)
-		{
-			std::cout << std::endl << "u1[8]: " << u1[8] << " u2[8]: " << u2[8] << " u3[8]: " << u3[8] <<
-				" u1[9]: " << u1[9] << " u2[9]: " << u2[9] << " u3[9]: " << u3[9] << std::endl;
-			if ((abs(u1[4] - 0.702848465455315) < eps) && (abs(u2[4] - 0.342287473165049) < eps)
-				&& (abs(u3[4] - 1.5143016216857514) < eps) && (abs(u1[5] - 0.422151534544684) < eps)
-				&& (abs(u2[5] - 0.342287473165049) < eps) && (abs(u3[5] - 1.235698378314249) < eps))
-				std::cout << pass << "Host first step solution " << reset;
-			else
-				std::cout << fail << "Host first step solution " << reset;
-		}
-		step++;
+		if (step > 1)
+			std::cout << "t: " << t  << ", tau: " << tau << " | ";
 	}
 	std::ofstream myfile;
 	myfile.open("RoeHost.dat");

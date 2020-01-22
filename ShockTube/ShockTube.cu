@@ -177,7 +177,7 @@ __global__ void initDeviceMemory(const int nbrOfGrids, double *d_u1,
 		}
 	}
 	updateCMax(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax); 
-	*d_tau = (*d_cfl) * (*d_h) / (*d_cMax);    // time grid size
+	*d_tau = (*d_cfl) * (*d_h) / (*d_cMax);    // initial time grid size, It will be modified to tMax if this > tMax
 }
 
 // copy device data members to host data members
@@ -364,7 +364,7 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 		if (i > 0) {
 			fl1[i] = fc1[i - 1]; fr1[i] = fc1[i];
 			fl2[i] = fc2[i - 1]; fr2[i] = fc2[i];
-			fl3[i] = fc3[i - 1]; fr3[i] = fc1[i];
+			fl3[i] = fc3[i - 1]; fr3[i] = fc3[i];
 		}
 
 		// calculate the flux differences at the cell walls
@@ -455,12 +455,18 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 						(sgn3[i] - dtdx * eiglam3[i]));
 		}
 		// calculate the final fluxes
+		double dlog1, dlog2, dlog3;
 		if (i > 0) {
 			d_f1[i] = 0.5 * (fl1[i] + fr1[i] + ac21[i] + ac22[i] + ac23[i]);
 			d_f2[i] = 0.5 * (fl2[i] + fr2[i] + eiglam1[i] * ac21[i]
 				+ eiglam2[i] * ac22[i] + eiglam3[i] * ac23[i]);
 			d_f3[i] = 0.5 * (fl3[i] + fr3[i] + (htilde[i] - utilde[i] * vsc[i]) * ac21[i]
 				+ absvt[i] * ac22[i] + (htilde[i] + utilde[i] * vsc[i]) * ac23[i]);
+			if (i == 4) {
+				dlog1 = fr1[i];
+				dlog2 = fr2[i];
+				dlog3 = fr3[i];
+			}
 		}
 		
 		/*/
@@ -477,8 +483,6 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 			d_u1[i] -= *d_tau / *d_h * (d_f1[i + 1] - d_f1[i]);
 			d_u2[i] -= *d_tau / *d_h * (d_f2[i + 1] - d_f2[i]);
 			d_u3[i] -= *d_tau / *d_h * (d_f3[i + 1] - d_f3[i]);
-			if (i == 9) {
-			}
 		}
 		/**/
 

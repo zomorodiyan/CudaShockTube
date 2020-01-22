@@ -2,7 +2,6 @@
 #include <algorithm> // in order to use std::max and std::min
 #include "ShockTube.cuh"
 
-
 // Allocate space for host copies of the variables
 void ShockTube::allocHostMemory() {
 	int size = nbrOfGrids * sizeof(double);
@@ -18,7 +17,46 @@ void ShockTube::allocHostMemory() {
 	u3Temp = (double*)malloc(size);
 }
 
-// Calculate and update value of cMax
+void ShockTube::updateAverages() {
+	roAverage = uAverage = eAverage = pAverage = 0;
+	double ro, u, e, p;
+	for (int i = 0; i < nbrOfGrids; i++) {
+		ro = u1[i];
+		u = u2[i] / u1[i];
+		e = u3[i];
+		p = (u3[i] - u2[i] * u2[i] / u1[i] / 2) * (gama - 1);
+		roAverage += ro;
+		uAverage += u;
+		eAverage += e;
+		pAverage += p;
+	}
+	roAverage /= nbrOfGrids;
+	uAverage /= nbrOfGrids;
+	eAverage /= nbrOfGrids;
+	pAverage /= nbrOfGrids;
+}
+
+// reflection boundary condition at both ends of the tube
+void ShockTube::hostBoundaryCondition() {
+	u1[0] = u1[1];
+	u2[0] = -u2[1];
+	u3[0] = u3[1];
+	u1[nbrOfGrids - 1] = u1[nbrOfGrids - 2];
+	u2[nbrOfGrids - 1] = -u2[nbrOfGrids - 2];
+	u3[nbrOfGrids - 1] = u3[nbrOfGrids - 2];
+}
+
+void ShockTube::freeHostMemory() {
+	free(u1);
+	free(u2);
+	free(u3);
+	free(f1);
+	free(f2);
+	free(f3);
+	free(vol);
+}
+
+// used in initHostMemory() and hostUpdateTau (Calculate and update value of cMax)
 void ShockTube::hostUpdateCMax() {
 	double ro, u, p, c; cMax = 0;
 	double u1d, u2d, u3d;
@@ -59,57 +97,6 @@ void ShockTube::initHostMemory() {
 	tau = cfl * h / cMax;     // time grid size
 }
 
-void ShockTube::updateAverages() {
-	roAverage = uAverage = eAverage = pAverage = 0;
-	double ro, u, e, p;
-	for (int i = 0; i < nbrOfGrids; i++) {
-		ro = u1[i];
-		u = u2[i] / u1[i];
-		e = u3[i];
-		p = (u3[i] - u2[i] * u2[i] / u1[i] / 2) * (gama - 1);
-		roAverage += ro;
-		uAverage += u;
-		eAverage += e;
-		pAverage += p;
-	}
-	roAverage /= nbrOfGrids;
-	uAverage /= nbrOfGrids;
-	eAverage /= nbrOfGrids;
-	pAverage /= nbrOfGrids;
-}
-
-// reflection boundary condition at both ends of the tube
-void ShockTube::hostBoundaryCondition() {
-	u1[0] = u1[1];
-	u2[0] = -u2[1];
-	u3[0] = u3[1];
-	u1[nbrOfGrids - 1] = u1[nbrOfGrids - 2];
-	u2[nbrOfGrids - 1] = -u2[nbrOfGrids - 2];
-	u3[nbrOfGrids - 1] = u3[nbrOfGrids - 2];
-}
-
-// reflection boundary condition at both ends of the tube (Temp)
-void ShockTube::hostBoundaryConditionTemp() {
-	u1Temp[0] = u1Temp[1];
-	u2Temp[0] = -u2Temp[1];
-	u3Temp[0] = u3Temp[1];
-	u1Temp[nbrOfGrids - 1] = u1Temp[nbrOfGrids - 2];
-	u2Temp[nbrOfGrids - 1] = -u2Temp[nbrOfGrids - 2];
-	u3Temp[nbrOfGrids - 1] = u3Temp[nbrOfGrids - 2];
-}
-
-// Free allocated space for host copies of the variables
-void ShockTube::freeHostMemory() {
-	free(u1);
-	free(u2);
-	free(u3);
-	free(f1);
-	free(f2);
-	free(f3);
-	free(vol);
-}
-
-// Calculate and return tau
 void ShockTube::hostUpdateTau() {
 	hostUpdateCMax();
 	tau = cfl * h / cMax;
@@ -129,6 +116,25 @@ void ShockTube::updateFlux() {
 }
 
 // used in hostLaxWendroffStep
+void ShockTube::halfStep() {
+	for (int j = 1; j < nbrOfGrids - 1; j++){
+			u1Temp[j] = (u1[j + 1] + u1[j]) / 2 - tau / 2 / h * (f1[j + 1] - f1[j]);
+			u2Temp[j] = (u2[j + 1] + u2[j]) / 2 - tau / 2 / h * (f2[j + 1] - f2[j]);
+			u3Temp[j] = (u3[j + 1] + u3[j]) / 2 - tau / 2 / h * (f3[j + 1] - f3[j]);
+	}
+}
+
+// used in hostLaxWendroffStep (reflection at both ends of the tube)
+void ShockTube::hostBoundaryConditionTemp() {
+	u1Temp[0] = u1Temp[1];
+	u2Temp[0] = -u2Temp[1];
+	u3Temp[0] = u3Temp[1];
+	u1Temp[nbrOfGrids - 1] = u1Temp[nbrOfGrids - 2];
+	u2Temp[nbrOfGrids - 1] = -u2Temp[nbrOfGrids - 2];
+	u3Temp[nbrOfGrids - 1] = u3Temp[nbrOfGrids - 2];
+}
+
+// used in hostLaxWendroffStep
 void ShockTube::updateFluxTemp() {
 	for (int j = 0; j < nbrOfGrids; j++) {
 		double rho = u1Temp[j];
@@ -138,15 +144,6 @@ void ShockTube::updateFluxTemp() {
 		f1[j] = m;
 		f2[j] = m * m / rho + p;
 		f3[j] = m / rho * (e + p);
-	}
-}
-
-// used in hostLaxWendroffStep
-void ShockTube::halfStep() {
-	for (int j = 1; j < nbrOfGrids - 1; j++){
-			u1Temp[j] = (u1[j + 1] + u1[j]) / 2 - tau / 2 / h * (f1[j + 1] - f1[j]);
-			u2Temp[j] = (u2[j + 1] + u2[j]) / 2 - tau / 2 / h * (f2[j + 1] - f2[j]);
-			u3Temp[j] = (u3[j + 1] + u3[j]) / 2 - tau / 2 / h * (f3[j + 1] - f3[j]);
 	}
 }
 
@@ -314,6 +311,7 @@ void ShockTube::hostRoeStep()
 	}
 
 	// calculate the final fluxes
+	double log1, log2, log3;
 	for (int i = 1; i <= nbrOfGrids - 1; i++) {
 		f1[i] = 0.5 * (fl[i][0] + fr[i][0] + ac2[i][0]
 			+ ac2[i][1] + ac2[i][2]);
@@ -324,6 +322,11 @@ void ShockTube::hostRoeStep()
 			(htilde[i] - utilde[i] * vsc[i]) * ac2[i][0] +
 			absvt[i] * ac2[i][1] +
 			(htilde[i] + utilde[i] * vsc[i]) * ac2[i][2]);
+		if (i == 4) {
+			log1 = fr[i][0];
+			log2 = fr[i][1];
+			log3 = fr[i][2];
+		}
 	}
 	// }}}
 	/*/ {{{

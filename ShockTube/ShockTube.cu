@@ -1,9 +1,12 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+
 #include <assert.h>
 #include <iostream>
+
 #include "ShockTube.cuh"
-#include <algorithm> // in order to use std::max and std::min
+
+//#include <algorithm> // in order to use std::max and std::min
 
 #define fail "\033[1;31m"
 #define reset "\033[0m"
@@ -42,7 +45,6 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&d_u2Temp, size));
 	cudaErrorCheck(cudaMalloc((void **)&d_u3Temp, size));
 		// only used in Roe step
-	/**/
 	cudaErrorCheck(cudaMalloc((void **)&w1, size));
 	cudaErrorCheck(cudaMalloc((void **)&w2, size));
 	cudaErrorCheck(cudaMalloc((void **)&w3, size));
@@ -84,7 +86,6 @@ void ShockTube::allocDeviceMemory() {
 	cudaErrorCheck(cudaMalloc((void **)&isb1, nbrOfGrids * sizeof(int)));
 	cudaErrorCheck(cudaMalloc((void **)&isb2, nbrOfGrids * sizeof(int)));
 	cudaErrorCheck(cudaMalloc((void **)&isb3, nbrOfGrids * sizeof(int)));
-	/**/
 }
 
 // Free allocated space for device copies of the variables
@@ -103,22 +104,45 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(d_nu));
 	cudaErrorCheck(cudaFree(d_tau));
 	cudaErrorCheck(cudaFree(d_cMax));
-	// only used in Lax-Wendroff step
+		// only used in Lax-Wendroff step
 	cudaErrorCheck(cudaFree(d_u1Temp));
 	cudaErrorCheck(cudaFree(d_u2Temp));
 	cudaErrorCheck(cudaFree(d_u3Temp));
-	// only used in Roe step /**/
-	cudaErrorCheck(cudaFree(w1)); cudaErrorCheck(cudaFree(w2)); cudaErrorCheck(cudaFree(w3));cudaErrorCheck(cudaFree(w4));
-	cudaErrorCheck(cudaFree(fc1)); cudaErrorCheck(cudaFree(fc2)); cudaErrorCheck(cudaFree(fc3));
-	cudaErrorCheck(cudaFree(fr1)); cudaErrorCheck(cudaFree(fr2)); cudaErrorCheck(cudaFree(fr3));
-	cudaErrorCheck(cudaFree(fl1)); cudaErrorCheck(cudaFree(fl2)); cudaErrorCheck(cudaFree(fl3));
-	cudaErrorCheck(cudaFree(fludif1)); cudaErrorCheck(cudaFree(fludif2)); cudaErrorCheck(cudaFree(fludif3));
-	cudaErrorCheck(cudaFree(eiglam1)); cudaErrorCheck(cudaFree(eiglam2)); cudaErrorCheck(cudaFree(eiglam3));
-	cudaErrorCheck(cudaFree(sgn1)); cudaErrorCheck(cudaFree(sgn2)); cudaErrorCheck(cudaFree(sgn3));
-	cudaErrorCheck(cudaFree(isb1)); cudaErrorCheck(cudaFree(isb2)); cudaErrorCheck(cudaFree(isb3));
-	cudaErrorCheck(cudaFree(a1)); cudaErrorCheck(cudaFree(a2)); cudaErrorCheck(cudaFree(a3));
-	cudaErrorCheck(cudaFree(ac11)); cudaErrorCheck(cudaFree(ac12)); cudaErrorCheck(cudaFree(ac13));
-	cudaErrorCheck(cudaFree(ac21)); cudaErrorCheck(cudaFree(ac22)); cudaErrorCheck(cudaFree(ac23));
+		// only used in Roe step 
+	cudaErrorCheck(cudaFree(w1));
+	cudaErrorCheck(cudaFree(w2));
+	cudaErrorCheck(cudaFree(w3));
+	cudaErrorCheck(cudaFree(w4));
+	cudaErrorCheck(cudaFree(fc1)); 
+	cudaErrorCheck(cudaFree(fc2));
+	cudaErrorCheck(cudaFree(fc3));
+	cudaErrorCheck(cudaFree(fr1)); 
+	cudaErrorCheck(cudaFree(fr2)); 
+	cudaErrorCheck(cudaFree(fr3));
+	cudaErrorCheck(cudaFree(fl1));
+	cudaErrorCheck(cudaFree(fl2));
+	cudaErrorCheck(cudaFree(fl3));
+	cudaErrorCheck(cudaFree(fludif1)); 
+	cudaErrorCheck(cudaFree(fludif2)); 
+	cudaErrorCheck(cudaFree(fludif3));
+	cudaErrorCheck(cudaFree(eiglam1));
+	cudaErrorCheck(cudaFree(eiglam2)); 
+	cudaErrorCheck(cudaFree(eiglam3));
+	cudaErrorCheck(cudaFree(sgn1)); 
+	cudaErrorCheck(cudaFree(sgn2)); 
+	cudaErrorCheck(cudaFree(sgn3));
+	cudaErrorCheck(cudaFree(isb1)); 
+	cudaErrorCheck(cudaFree(isb2)); 
+	cudaErrorCheck(cudaFree(isb3));
+	cudaErrorCheck(cudaFree(a1)); 
+	cudaErrorCheck(cudaFree(a2)); 
+	cudaErrorCheck(cudaFree(a3));
+	cudaErrorCheck(cudaFree(ac11)); 
+	cudaErrorCheck(cudaFree(ac12)); 
+	cudaErrorCheck(cudaFree(ac13));
+	cudaErrorCheck(cudaFree(ac21)); 
+	cudaErrorCheck(cudaFree(ac22)); 
+	cudaErrorCheck(cudaFree(ac23));
 	cudaErrorCheck(cudaFree(rsumr));
 	cudaErrorCheck(cudaFree(utilde));
 	cudaErrorCheck(cudaFree(htilde));
@@ -126,19 +150,17 @@ void ShockTube::freeDeviceMemory() {
 	cudaErrorCheck(cudaFree(absvt));
 	cudaErrorCheck(cudaFree(ssc));
 	cudaErrorCheck(cudaFree(vsc));
-	/**/
 }
 
 // calculate and update value of d_cMax
-__device__ void updateCMax(const int nbrOfGrids, const double *d_u1, const double *d_u2, const double *d_u3, const double *d_gama, double *d_cMax) { *d_cMax = 0; int index = blockIdx.x * blockDim.x + threadIdx.x;
+__device__ void updateCMax(const int nbrOfGrids, const double *d_u1, 
+	const double *d_u2, const double *d_u3, const double *d_gama, double *d_cMax) 
+{ 
+	*d_cMax = 0; int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 	double ro, p, u;
-	double u1, u2, u3; // debug
 	__shared__ double c;
 	for (int i = index; i < nbrOfGrids; i += stride){
-		u1 = d_u1[i];
-		u2 = d_u2[i];
-		u3 = d_u3[i];
 		if (d_u1[i] == 0)
 			continue;
 		ro = d_u1[i];
@@ -155,12 +177,12 @@ __global__ void initDeviceMemory(const int nbrOfGrids, double *d_u1,
 	double *d_u2, double *d_u3, double *d_vol, double *d_h,
 	double *d_length, double *d_gama, double *d_cfl, double *d_nu,
 	double *d_tau, double *d_cMax, double *d_t) {
-	*d_t = 0;							// time
-	*d_length = 1;					// length of shock tube
-	*d_gama = 1.4;						// ratio of specific heats
-	*d_cfl = 0.9;						// Courant-Friedrichs-Lewy number
+	*d_t = 0;								// time
+	*d_length = 1;							// length of shock tube
+	*d_gama = 1.4;							// ratio of specific heats
+	*d_cfl = 0.9;							// Courant-Friedrichs-Lewy number
 	*d_nu = 0.0;							// artificial viscosity coefficient
-	*d_h = *d_length / (nbrOfGrids - 1);  // space grid size
+	*d_h = *d_length / (nbrOfGrids - 1);	// space grid size
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x;
 	for(int i = index; i < nbrOfGrids; i+= stride){
@@ -186,24 +208,7 @@ void ShockTube::copyDeviceToHost(const int nbrOfGrids) {
 	cudaErrorCheck(cudaMemcpy(u1, d_u1, size, cudaMemcpyDeviceToHost));
 	cudaErrorCheck(cudaMemcpy(u2, d_u2, size, cudaMemcpyDeviceToHost));
 	cudaErrorCheck(cudaMemcpy(u3, d_u3, size, cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(vol, d_vol, size, cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&h, d_h, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&length, d_length, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&gama, d_gama, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&cfl, d_cfl, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&cMax, d_cMax, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&nu, d_nu, sizeof(double), cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
 }
-
-// copy flux from device to host (debeg)
-void ShockTube::copyFluxFromDeviceToHost(const int nbrOfGrids) {
-	int size = nbrOfGrids * sizeof(double);
-	cudaErrorCheck(cudaMemcpy(f1, d_f1, size, cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(f2, d_f2, size, cudaMemcpyDeviceToHost));
-	cudaErrorCheck(cudaMemcpy(f3, d_f3, size, cudaMemcpyDeviceToHost));
-}
-
 
 // copy host data members to device data members
 void ShockTube::copyHostToDevice(const int nbrOfGrids) {
@@ -211,29 +216,6 @@ void ShockTube::copyHostToDevice(const int nbrOfGrids) {
 	cudaErrorCheck(cudaMemcpy(d_u1, u1, size, cudaMemcpyHostToDevice));
 	cudaErrorCheck(cudaMemcpy(d_u2, u2, size, cudaMemcpyHostToDevice));
 	cudaErrorCheck(cudaMemcpy(d_u3, u3, size, cudaMemcpyHostToDevice));
-	/*/
-	cudaErrorCheck(cudaMemcpy(d_f1, f1, size, cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_f2, f2, size, cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_f3, f3, size, cudaMemcpyHostToDevice));
-	/**/
-	cudaErrorCheck(cudaMemcpy(d_vol, vol, size, cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_h, &h, sizeof(double), cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_length, &length, sizeof(double), cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_gama, &gama, sizeof(double), cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_cfl, &cfl, sizeof(double), cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-	cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
-}
-
-
-__global__ void boundaryCondition(const int nbrOfGrids,
-	double *d_u1, double *d_u2, double *d_u3) {
-	d_u1[0] = d_u1[1];
-	d_u2[0] = -d_u2[1];
-	d_u3[0] = d_u3[1];
-	d_u1[nbrOfGrids - 1] = d_u1[nbrOfGrids - 2];
-	d_u2[nbrOfGrids - 1] = -d_u2[nbrOfGrids - 2];
-	d_u3[nbrOfGrids - 1] = d_u3[nbrOfGrids - 2];
 }
 
 __global__ void updateTau(const int nbrOfGrids, const double *d_u1,
@@ -243,7 +225,17 @@ __global__ void updateTau(const int nbrOfGrids, const double *d_u1,
 	*d_tau = *d_cfl * *d_h / *d_cMax;
 }
 
-// used in laxWendroffStep
+ __global__ void boundaryCondition(const int nbrOfGrids,
+	double *d_u1, double *d_u2, double *d_u3) {
+	d_u1[0] = d_u1[1];
+	d_u2[0] = -d_u2[1];
+	d_u3[0] = d_u3[1];
+	d_u1[nbrOfGrids - 1] = d_u1[nbrOfGrids - 2];
+	d_u2[nbrOfGrids - 1] = -d_u2[nbrOfGrids - 2];
+	d_u3[nbrOfGrids - 1] = d_u3[nbrOfGrids - 2];
+}
+
+// used in laxWendroffStep 
 __device__ void d_boundaryCondition(const int nbrOfGrids,
 	double *d_u1, double *d_u2, double *d_u3) {
 	d_u1[0] = d_u1[1];
@@ -324,8 +316,8 @@ __global__	void laxWendroffStep(const int nbrOfGrids, double *d_u1, double *d_u2
 	updateFlux(nbrOfGrids, d_u1Temp, d_u2Temp, d_u3Temp, d_f1, d_f2, d_f3, d_gama);
 	step(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, d_f1, d_f2, d_f3, d_tau, d_h);
 	updateU(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp);
+	d_boundaryCondition(nbrOfGrids, d_u1, d_u2, d_u3);
 }
-
 
 // used in RoeStep
 	#define tiny 1e-30
@@ -342,25 +334,27 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 	double *eiglam1,double *eiglam2,double *eiglam3, double *sgn1,double *sgn2,double *sgn3,
 	int *isb1,int *isb2,int *isb3, double *a1,double *a2,double *a3,
 	double *ac11,double *ac12,double *ac13, double *ac21,double *ac22,double *ac23) {
-
-
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x;
 	for (int i = index; i < nbrOfGrids; i += stride) {
 
 		// find parameter vector w
-		w1[i] = sqrt(d_vol[i] * d_u1[i]);
-		w2[i] = w1[i] * d_u2[i] / d_u1[i];
-		w4[i] = (*d_gama - 1) * (d_u3[i] - 0.5 * d_u2[i] * d_u2[i] / d_u1[i]);
-		w3[i] = w1[i] * (d_u3[i] + w4[i]) / d_u1[i];
+		{
+			w1[i] = sqrt(d_vol[i] * d_u1[i]);
+			w2[i] = w1[i] * d_u2[i] / d_u1[i];
+			w4[i] = (*d_gama - 1) * (d_u3[i] - 0.5 * d_u2[i] * d_u2[i] / d_u1[i]);
+			w3[i] = w1[i] * (d_u3[i] + w4[i]) / d_u1[i];
+		}
 
 		// calculate the fluxes at the cell center
-		fc1[i] = w1[i] * w2[i];
-		fc2[i] = w2[i] * w2[i] + d_vol[i] * w4[i];
-		fc3[i] = w2[i] * w3[i];
+		{
+			fc1[i] = w1[i] * w2[i];
+			fc2[i] = w2[i] * w2[i] + d_vol[i] * w4[i];
+			fc3[i] = w2[i] * w3[i];
+		}
 
-		// calculate the fes at the cell walls
-		// assuming constant primitive variables
+		__syncthreads(); // because of the [i - 1] index below
+		// calculate the fluxes at the cell walls 
 		if (i > 0) {
 			fl1[i] = fc1[i - 1]; fr1[i] = fc1[i];
 			fl2[i] = fc2[i - 1]; fr2[i] = fc2[i];
@@ -374,6 +368,7 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 			fludif3[i] = fr3[i] - fl3[i];
 		}
 
+		__syncthreads(); // because of the [i - 1] index below
 		// calculate the tilded state variables = mean values at the interfaces
 		if (i > 0) {
 			rsumr[i] = 1 / (w1[i - 1] + w1[i]);
@@ -392,8 +387,7 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 			}
 		}
 
-		// calculate the eigenvalues and projection coefficients for each
-		// eigenvector
+		// calculate the eigenvalues and projection coefficients for each eigenvector
 		if (i > 0) {
 			eiglam1[i] = utilde[i] - vsc[i];
 			eiglam2[i] = utilde[i];
@@ -411,8 +405,7 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 					* fludif1[i])) / ssc[i];
 		}
 
-		// divide the projection coefficients by the wave speeds
-		// to evade expansion correction
+		// divide the projection coefficients by the wave speeds to evade expansion correction
 		if (i > 0) {
 			a1[i] /= eiglam1[i] + tiny;
 			a2[i] /= eiglam2[i] + tiny;
@@ -426,65 +419,53 @@ __global__	void RoeStep(const int nbrOfGrids, double *d_u1, double *d_u2,
 			ac13[i] = -sgn3[i] * a3[i] * eiglam3[i];
 		}
 
-		// apply the 'superbee' flux correction to made 2nd order projection
-		// coefficients ac2
-		ac21[1] = ac11[1];
-		ac21[nbrOfGrids - 1] = ac11[nbrOfGrids - 1];
-		ac22[1] = ac12[1];
-		ac22[nbrOfGrids - 1] = ac12[nbrOfGrids - 1];
-		ac23[1] = ac13[1];
-		ac23[nbrOfGrids - 1] = ac13[nbrOfGrids - 1];
+		// apply the 'superbee' flux correction to made 2nd order projection coefficients ac2
+		{
+			ac21[1] = ac11[1];
+			ac21[nbrOfGrids - 1] = ac11[nbrOfGrids - 1];
+			ac22[1] = ac12[1];
+			ac22[nbrOfGrids - 1] = ac12[nbrOfGrids - 1];
+			ac23[1] = ac13[1];
+			ac23[nbrOfGrids - 1] = ac13[nbrOfGrids - 1];
 
 
-		double dtdx = *d_tau / *d_h;
-		if ((i > 1) && (i < nbrOfGrids - 1)) {
-			isb1[i] = i - int(sgn1[i]);
-			ac21[i] = ac11[i] + eiglam1[i] *
-				((fmax(0.0, fmin(sbpar1 * a1[isb1[i]], fmax(a1[i], fmin(a1[isb1[i]], sbpar2 * a1[i])))) +
-					fmin(0.0, fmax(sbpar1 * a1[isb1[i]], fmin(a1[i], fmax(a1[isb1[i]], sbpar2 * a1[i]))))) *
+			double dtdx = *d_tau / *d_h;
+			if ((i > 1) && (i < nbrOfGrids - 1)) {
+				isb1[i] = i - int(sgn1[i]);
+				ac21[i] = ac11[i] + eiglam1[i] *
+					((fmax(0.0, fmin(sbpar1 * a1[isb1[i]], fmax(a1[i], fmin(a1[isb1[i]], sbpar2 * a1[i])))) +
+						fmin(0.0, fmax(sbpar1 * a1[isb1[i]], fmin(a1[i], fmax(a1[isb1[i]], sbpar2 * a1[i]))))) *
 						(sgn1[i] - dtdx * eiglam1[i]));
-			isb2[i] = i - int(sgn2[i]);
-			ac22[i] = ac12[i] + eiglam2[i] *
-				((fmax(0.0, fmin(sbpar1 * a2[isb2[i]], fmax(a2[i], fmin(a2[isb2[i]], sbpar2 * a2[i])))) +
-					fmin(0.0, fmax(sbpar1 * a2[isb2[i]], fmin(a2[i], fmax(a2[isb2[i]], sbpar2 * a2[i]))))) *
+				isb2[i] = i - int(sgn2[i]);
+				ac22[i] = ac12[i] + eiglam2[i] *
+					((fmax(0.0, fmin(sbpar1 * a2[isb2[i]], fmax(a2[i], fmin(a2[isb2[i]], sbpar2 * a2[i])))) +
+						fmin(0.0, fmax(sbpar1 * a2[isb2[i]], fmin(a2[i], fmax(a2[isb2[i]], sbpar2 * a2[i]))))) *
 						(sgn2[i] - dtdx * eiglam2[i]));
-			isb3[i] = i - int(sgn3[i]);
-			ac23[i] = ac13[i] + eiglam3[i] *
-				((fmax(0.0, fmin(sbpar1 * a3[isb3[i]], fmax(a3[i], fmin(a3[isb3[i]], sbpar2 * a3[i])))) +
-					fmin(0.0, fmax(sbpar1 * a3[isb3[i]], fmin(a3[i], fmax(a3[isb3[i]], sbpar2 * a3[i]))))) *
+				isb3[i] = i - int(sgn3[i]);
+				ac23[i] = ac13[i] + eiglam3[i] *
+					((fmax(0.0, fmin(sbpar1 * a3[isb3[i]], fmax(a3[i], fmin(a3[isb3[i]], sbpar2 * a3[i])))) +
+						fmin(0.0, fmax(sbpar1 * a3[isb3[i]], fmin(a3[i], fmax(a3[isb3[i]], sbpar2 * a3[i]))))) *
 						(sgn3[i] - dtdx * eiglam3[i]));
+			}
 		}
+
 		// calculate the final fluxes
-		double dlog1, dlog2, dlog3;
 		if (i > 0) {
 			d_f1[i] = 0.5 * (fl1[i] + fr1[i] + ac21[i] + ac22[i] + ac23[i]);
 			d_f2[i] = 0.5 * (fl2[i] + fr2[i] + eiglam1[i] * ac21[i]
 				+ eiglam2[i] * ac22[i] + eiglam3[i] * ac23[i]);
 			d_f3[i] = 0.5 * (fl3[i] + fr3[i] + (htilde[i] - utilde[i] * vsc[i]) * ac21[i]
 				+ absvt[i] * ac22[i] + (htilde[i] + utilde[i] * vsc[i]) * ac23[i]);
-			if (i == 4) {
-				dlog1 = fr1[i];
-				dlog2 = fr2[i];
-				dlog3 = fr3[i];
-			}
-		}
-		
-		/*/
-		// update U (debug)
-		if (i > 0) {
-			d_u1[i] = d_f1[i];
-			d_u2[i] = d_f2[i];
-			d_u3[i] = d_f3[i];
 		}
 
+		__syncthreads(); // because of the [i + 1] index below
 		// update U
-		/*/
 		if (i > 0 && i < nbrOfGrids - 1) {
 			d_u1[i] -= *d_tau / *d_h * (d_f1[i + 1] - d_f1[i]);
 			d_u2[i] -= *d_tau / *d_h * (d_f2[i + 1] - d_f2[i]);
 			d_u3[i] -= *d_tau / *d_h * (d_f3[i + 1] - d_f3[i]);
 		}
-		/**/
 
+		d_boundaryCondition(nbrOfGrids, d_u1, d_u2, d_u3);
 	}
 }

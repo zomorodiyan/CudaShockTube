@@ -78,8 +78,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="DeviceTests.cu" />
-    <CudaCompile Include="HostTests.cpp" />
+    <CudaCompile Include="Device.cu" />
+    <CudaCompile Include="Host.cpp" />
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="ShockTube.cu" />
   </ItemGroup>

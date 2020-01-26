@@ -1,8 +1,8 @@
 #include <iostream>
-#include <algorithm> // in order to use std::max and std::min
+#include <fstream>
+#include <algorithm> // in order to use std::max and std::min in the hostRoeStep
 #include "ShockTube.cuh"
 
-// Allocate space for host copies of the variables
 void ShockTube::allocHostMemory() {
 	int size = nbrOfGrids * sizeof(double);
 	u1 = (double*)malloc(size);
@@ -56,7 +56,7 @@ void ShockTube::freeHostMemory() {
 	free(vol);
 }
 
-// used in initHostMemory() and hostUpdateTau (Calculate and update value of cMax)
+// used in initHostMemory and hostUpdateTau (Calculate and update value of cMax)
 void ShockTube::hostUpdateCMax() {
 	double ro, u, p, c; cMax = 0;
 	double u1d, u2d, u3d;
@@ -77,11 +77,11 @@ void ShockTube::hostUpdateCMax() {
 }
 
 void ShockTube::initHostMemory() {
-	t = 0;						// time
+	//t = 0;					// time (used in Solutions)
 	length = 1;                 // length of shock tube
 	gama = 1.4;                 // ratio of specific heats
 	cfl = 0.9;                  // Courant-Friedrichs-Lewy number
-	nu = 0.0;                   // artificial viscosity coefficient
+	//nu = 0.1;                   // artificial viscosity coefficient (used in lapidusViscosity function)
 	h = length / (nbrOfGrids - 1);   // space grid size
 	double ro, p, u = 0;
 	for (int i = 0; i < nbrOfGrids; i++) {
@@ -100,6 +100,29 @@ void ShockTube::initHostMemory() {
 void ShockTube::hostUpdateTau() {
 	hostUpdateCMax();
 	tau = cfl * h / cMax;
+}
+
+void ShockTube::writeToFile(std::string fileName){
+	std::ofstream myfile;
+	myfile.open(fileName);
+	myfile << "variables = x, rho, u, p, mo, e, et, T, c, M, h" << std::endl;
+	for (int i = 0; i < nbrOfGrids; i++) {
+		double rho = u1[i];
+		double u = u2[i] / rho;
+		double p = (u3[i] - rho * u * u / 2) * (gama - 1);
+		double m = u2[i]; // Momentum I think(?)
+		double e = u3[i];
+		//double e = p / (gama - 1) / rho; // Is this line correct or the previous?
+		double E = p / (gama - 1.) + 0.5 * rho * u * u;
+		double T = p / rho;
+		double c = sqrt(gama * p / rho);
+		double M = u / c;
+		double h = e + p / rho;
+		double x = double(i) / double(nbrOfGrids);
+		myfile << x << " " << rho << " " << u << " " << p << " " << m << " " << e << " " << E 
+			<< " " << T << " " << c << " " << M << " " << h << "\n";
+	}
+	myfile.close();
 }
 
 // used in hostLaxWendroffStep
@@ -429,6 +452,8 @@ void ShockTube::hostRoeStep()
 	delete[] isb;
 }
 
+/*/
+// it will compute u[2], u[3] ... (How should I update u[1]?)
 void ShockTube::lapidusViscosity() {
 	// store Delta_U values in newU
 	for (int j = 1; j < nbrOfGrids; j++) {
@@ -451,4 +476,5 @@ void ShockTube::lapidusViscosity() {
 		u3[j] += nu * tau / h * (u3Temp[j] - u3Temp[j - 1]);
 	}
 }
+/**/
 

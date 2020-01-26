@@ -8,13 +8,15 @@ public:
 	ShockTube() { ; }
 	~ShockTube(){ ; }
 
-	// Host Tests
+	// Host Tests and Solutions
 	void HostTest01(); void HostTest02(); void HostTest03(); void HostTest04();
 	void LaxHost(); void RoeHost();
 
-	// Device Tests
+	// Device Tests and Solutions
 	void DeviceTest01(); void DeviceTest02(); void DeviceTest03(); void DeviceTest04(); void DeviceTest05();
 	void LaxDevice(); void RoeDevice();
+
+	void writeToFile(std::string fileName);
 
 	// Allocate space for host copies of the variables
 	void allocHostMemory();
@@ -42,7 +44,7 @@ public:
 
 	// host data members
 	int nbrOfGrids = 200;	// number of grid points (default = 200)
-	double h, length, gama, cfl, nu, tau, cMax, uAverage, roAverage,
+	double h, length, gama, cfl, /*nu,*/ tau, cMax, uAverage, roAverage,
 		eAverage, pAverage, t;
 	double *u1, *u2, *u3, *f1, *f2, *f3, *vol, *u1Temp, *u2Temp, *u3Temp;
 
@@ -50,8 +52,10 @@ public:
 	double *d_h, *d_length, *d_gama, *d_cfl, *d_nu, *d_tau, *d_t;
 	double *d_u1, *d_u2, *d_u3, *d_f1, *d_f2, *d_f3, *d_vol, *d_cMax;
 	int size = nbrOfGrids * sizeof(int);
+
 	// just used in Lax-Wendroff step
 	double *d_u1Temp, *d_u2Temp, *d_u3Temp;
+
 	// just used in Roe and pike step
 	double *w1,*w2,*w3,*w4, *fc1,*fc2,*fc3, *fr1,*fr2,*fr3, *fl1,*fl2,*fl3, *fludif1,*fludif2,*fludif3,
 		*rsumr, *utilde, *htilde, *uvdif, *absvt, *ssc, *vsc,
@@ -66,9 +70,6 @@ public:
 
 	// copy device data members to host data members
 	void copyDeviceToHost(const int nbrOfGrids);
-
-	// copy flux from device to host (for debegging purpose)
-	void copyFluxFromDeviceToHost(const int nbrOfGrids);
 
 	// copy host data members to device data members
 	void copyHostToDevice(const int nbrOfGrids);
@@ -91,8 +92,6 @@ public:
 	void hostLaxWendroffStep();
 
 	void hostRoeStep();
-
-	void lapidusViscosity();
 };
 
 

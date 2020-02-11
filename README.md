@@ -5,6 +5,6 @@ The Sod shock tube problem, named after Gary A. Sod, is a common test for the ac
 In this project we numerically solve the Sod shock tube problem using CUDA and compare the results with the anaylitical solution. Moreover, we compare the run-time and memory cost of solution on cpu in C++ and solution on gpu in CUDA C++.
 ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif) ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif) 
 
-Solarized dark             |  Solarized Ocean
-:-------------------------:|:-------------------------:
-![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)
+Solarized dark             |  Solarized Ocean         | Solarized White
+:-------------------------:|:-------------------------:-------------------------:
+![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)

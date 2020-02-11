@@ -9,7 +9,7 @@ In this project we numerically solve the Sod shock tube problem using CUDA and c
 
 Lax Wendroff [1]   |  Roe Pike [2]       | Analytical
 :-------------------------:|:-------------------------:|:-------------------------:
-![](results/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)<br/>
+![](results/laxDensity.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)<br/>
 ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)<br/>
 ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/density.gif)<br/>
 

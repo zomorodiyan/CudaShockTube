@@ -8,5 +8,5 @@ Lax Wendroff [1]   |  Roe Pike [2]       | Analytical
 :-------------------------:|:-------------------------:|:-------------------------:
 ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)  |  ![](http://zomorod.me/wp-content/uploads/2020/02/sdf.gif)
 
-[1] P.D Lax and B. Wendroff (1960). “Systems of conservation laws”. Commun. Pure Appl. Math. 13 (2): 217–237.
+[1] P.D Lax and B. Wendroff (1960). “Systems of conservation laws”. Commun. Pure Appl. Math. 13 (2): 217–237.<br/>
 [2] P. Roe and J. Pike, (1984). “Efficient Construction and Utilisation of Approximate Riemann Solutions,” Comput. Methods Appl. Sci. Eng., no. INRIA North-Holland, pp. 499–518.

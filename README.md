@@ -1,6 +1,6 @@
 ## GPU-accelerated simulation of Sod shock tube problem by NVIDA CUDA
-![](Sod.jpg)<br/>
-<img align="right" height="600" src="Sod.jpg">
+
+<img align="right" width="600" src="Sod.jpg">
 The Sod shock tube is a Riemann problem used as a standard test problem in computational Fluid dynamics.
 Checkout the article in [Wikipedia](http://en.wikipedia.org/wiki/Sod_shock_tube) for a more complete description of the Sod problem.
 ### About the code

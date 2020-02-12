@@ -10,12 +10,14 @@ In this project we numerically solve the Sod shock tube problem using CUDA and c
 [1] P.D Lax and B. Wendroff (1960). “Systems of conservation laws”. Commun. Pure Appl. Math. 13 (2): 217–237.<br/>
 [2] P. Roe and J. Pike, (1984). “Efficient Construction and Utilisation of Approximate Riemann Solutions,” Comput. Methods Appl. Sci. Eng., no. INRIA North-Holland, pp. 499–518.
 
-![](results/sodUgif.gif)
+![](results/sodUgif.gif)<br/>
 
 ###To create the Analytic results (analytical.dat)
 Run analyticalNumpy/exactRiemann.py by python.
+
 ###To create the Numerical results (lax.dat, roe.dat)
 Build and run the solution of cudaShockTube/shockTube.sln in Visual Studio.
+
 #Prerequisites
 A system with an NVIDIA GPU, CUDA-supporting drivers
 Visual Studio (a compatible version with CUDA) for Numerical Solution

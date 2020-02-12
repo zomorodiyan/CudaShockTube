@@ -11,12 +11,12 @@ We compare the results with the anaylitical solution. Moreover, we will compare 
 ## Results
 ![](results/sodUgif.gif)<br/>
 
-## To create the Analytic results (analytical.dat)
-Run analyticalNumpy/exactRiemann.py by python.
+## To create the Analytic results
+Run analyticalNumpy/exactRiemann.py by python to get analytical.dat.
 For analytical results we used sod library from https://github.com/ibackus/sod-shocktube repository which is a simple pythonic implementation of a Riemann solver for the analytic solution of the sod shock tube.
 
-## To create the Numerical results (lax.dat, roe.dat)
-Build and run the solution of cudaShockTube/shockTube.sln in Visual Studio.
+## To create the Numerical results
+Build and run the solution of cudaShockTube/shockTube.sln in Visual Studio to get lax.dat, roe.dat.
 
 ## To visualize the results
 run pytecplot/XYLine.py by python.

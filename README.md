@@ -1,8 +1,5 @@
 # SodShockTube
 ### Simulation of Sod shock tube problem, using C++,on CPU and NVIDIA CUDA, on GPU
-<p align="center">
-  <img src="http://zomorod.me/wp-content/uploads/2019/10/Sod.jpg">
-</p>
 
 <img align="left" width="350" src="http://zomorod.me/wp-content/uploads/2019/10/Sod.jpg">
 The Sod shock tube problem, named after Gary A. Sod, is a common test for the accuracy of computational fluid codes, like Riemann solvers, and was heavily investigated by Sod in 1978. The test consists of a one-dimensional Riemann problem which its time evolution can be described by solving the Euler equations, which leads to three characteristics, describing the propagation speed of the various regions of the system. Namely the expansion wave, the contact discontinuity and the shock discontinuity. If this is solved numerically, one can test against the analytical solution, and get information how well a code captures and resolves shocks and contact discontinuities and reproduce the correct density profile of the expansion wave.<br/>

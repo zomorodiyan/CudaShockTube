@@ -4,7 +4,7 @@
   <img src="http://zomorod.me/wp-content/uploads/2019/10/Sod.jpg">
 </p>
 
-<img align="right" width="300" src="http://zomorod.me/wp-content/uploads/2019/10/Sod.jpg">Markdown magic uses comment blocks in markdown files to automatically sync or transform its contents.
+<img align="left" width="300" src="http://zomorod.me/wp-content/uploads/2019/10/Sod.jpg">Markdown magic uses comment blocks in markdown files to automatically sync or transform its contents.
 
 - Automatically keep markdown files up to date from local or remote code sources
 - Transform markdown content with custom transform functions

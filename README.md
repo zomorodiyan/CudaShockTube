@@ -9,6 +9,7 @@ The Sod shock tube is a Riemann problem used as a standard test problem in compu
 In this project we use algorithms presented in Lax [2] and Roe [3] to solve the Sod shock tube problem using CUDA and we use the standard test case for the initial condition ([rho_left, P_left, v_left] = [1, 1, 0], [rho_right, P_right, v_right] = [0.125, 0.1, 0]) and the reatio of specific heats (1.4).
 We compare the results with the anaylitical solution. Moreover, we will compare the run-time and memory cost of solution on cpu in C++ and solution on gpu in CUDA C++.
 
+## Results
 ![](results/sodUgif.gif)<br/>
 
 ## To create the Analytic results (analytical.dat)

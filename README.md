@@ -1,13 +1,9 @@
-# SodShockTube
-### Simulation of Sod shock tube problem, using C++,on CPU and NVIDIA CUDA, on GPU
+## GPU-accelerated simulation of Sod shock tube problem by NVIDA CUDA
 ![](Sod.jpg)<br/>
+<img align="right" height="600" src="Sod.jpg">
 The Sod shock tube is a Riemann problem used as a standard test problem in computational Fluid dynamics.
 Checkout the article in [Wikipedia](http://en.wikipedia.org/wiki/Sod_shock_tube) for a more complete description of the Sod problem.
-### Standard test case
-In the standard case the density and pressure on the left are unity,
-and the density on the right side of the contact is 0.125 and the pressure is 0.1.
-The ratio of specific heats is 1.4.
-## About the code
+### About the code
 In this project we use algorithms presented in Lax [1] and Roe [2] to solve the Sod shock tube problem using CUDA and we use the standard test case for the initial condition ([rho_left, P_left, v_left] = [1, 1, 0], [rho_right, P_right, v_right] = [0.125, 0.1, 0]) and the reatio of specific heats (1.4).
 We compare the results with the anaylitical solution. Moreover, we will compare the run-time and memory cost of solution on cpu in C++ and solution on gpu in CUDA C++.
 

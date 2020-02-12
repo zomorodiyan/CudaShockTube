@@ -18,11 +18,14 @@ For analytical results we used sod library from https://github.com/ibackus/sod-s
 ## To create the Numerical results (lax.dat, roe.dat)
 Build and run the solution of cudaShockTube/shockTube.sln in Visual Studio.
 
+## To visualize the results
+run pytecplot/XYLine.py by python.
+
 ## Prerequisites
 * A system with an NVIDIA GPU and CUDA-supporting drivers
 * Visual Studio (for Numerical Solution)
 * Python for Analytical Solution (for validation purpose)
-* Tecplot 360 (past processing)
+* Tecplot 360 and pytecplot library (past processing)
 
 ## References
 [1] Abi-Chahla, Fedy (June 18, 2008). "Nvidia's CUDA: The End of the CPU?". Tom's Hardware. Retrieved May 17, 2015.<br/>

@@ -9,6 +9,4 @@ In this project we numerically solve the Sod shock tube problem using CUDA and c
 
 Lax Wendroff [1]   |  Roe Pike [2]       | Analytical
 :-------------------------:|:-------------------------:|:-------------------------:
-![](results/laxDensity.gif)  |  ![](results/laxDensity.gif)  |  ![](results/laxDensity.gif)<br/>
-![](results/laxPressure.gif)  |  ![](results/laxPressure.gif)  |  ![](results/laxPressure.gif)<br/>
-![](results/laxVelocity.gif)  |  ![](results/laxVelocity.gif)  |  ![](results/laxVelocity.gif)<br/>
+![](results/sodUgif.gif)

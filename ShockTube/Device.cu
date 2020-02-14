@@ -110,24 +110,82 @@ void ShockTube::LaxDevice() {
 	std::cout << yellow << __func__ << reset;
 	nbrOfGrids = 256;
 	allocDeviceMemory();
-	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
-	for (double tMax = 0.2, t = 0; t - tMax < -eps; t += tau)
-	{
-		updateTau<<<1,1>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax, d_h, d_cfl, d_tau); 
-		cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
-		if (t + tau - tMax > eps)
-			tau = tMax - t;
-		cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
-		laxWendroffStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, d_f1, d_f2, d_f3, d_tau, d_h, d_gama);
-	}
 	allocHostMemory();
+
+	std::string filename[21] = { "lax00.dat", "lax01.dat", "lax02.dat", "lax03.dat", "lax04.dat", "lax05.dat",
+		"lax06.dat", "lax07.dat", "lax08.dat", "lax09.dat", "lax10.dat", "lax11.dat", "lax12.dat", "lax13.dat",
+		"lax14.dat", "lax15.dat", "lax16.dat", "lax17.dat", "lax18.dat", "lax19.dat", "lax20.dat" };
+	// write initial condition to lax00.dat
+	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
 	copyDeviceToHost(nbrOfGrids);
+	writeToFile(filename[0]);
+
+	double tMax = 0; 
+	double increment = 0.2 / 20;
+	for (int run = 1; run < 21 ;run++)
+	{ 
+		tMax += increment;
+
+		initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+		for (t = 0; t - tMax < -eps; t += tau)
+		{
+			updateTau<<<1,1>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax, d_h, d_cfl, d_tau); 
+			cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
+			if (t + tau - tMax > eps)
+				tau = tMax - t;
+			cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
+			laxWendroffStep<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_u1Temp, d_u2Temp, d_u3Temp, d_f1, d_f2, d_f3, d_tau, d_h, d_gama);
+		}
+		copyDeviceToHost(nbrOfGrids);
+		writeToFile(filename[run]);
+		std::cout << blue << "solution: " << filename[run] << reset << std::endl;
+	}
 	freeDeviceMemory();
-	writeToFile("LaxDevice.dat");
-	std::cout << blue << "solution: LaxDevice.dat" << reset << std::endl;
 	freeHostMemory();
 }
 
+void ShockTube::RoeDevice() {
+	std::cout << yellow << __func__ << reset;
+	nbrOfGrids = 256;
+	allocDeviceMemory();
+	allocHostMemory();
+
+	std::string filename[21] = { "roe00.dat", "roe01.dat", "roe02.dat", "roe03.dat", "roe04.dat", "roe05.dat",
+		"roe06.dat", "roe07.dat", "roe08.dat", "roe09.dat", "roe10.dat", "roe11.dat", "roe12.dat", "roe13.dat",
+		"roe14.dat", "roe15.dat", "roe16.dat", "roe17.dat", "roe18.dat", "roe19.dat", "roe20.dat" };
+	// write initial condition to roe00.dat
+	initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+	copyDeviceToHost(nbrOfGrids);
+	writeToFile(filename[0]);
+
+	double tMax = 0; 
+	double increment = 0.2 / 20;
+	for (int run = 1; run < 21 ;run++)
+	{ 
+		tMax += increment;
+
+		initDeviceMemory<<<1,16>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_h, d_length, d_gama, d_cfl, d_nu, d_tau, d_cMax, d_t);
+		for (t = 0; t - tMax < -eps; t += tau)
+		{
+			updateTau<<<1,1>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_gama, d_cMax, d_h, d_cfl, d_tau); 
+			cudaErrorCheck(cudaMemcpy(&tau, d_tau, sizeof(double), cudaMemcpyDeviceToHost));
+			if (t + tau - tMax > eps)
+				tau = tMax - t;
+			cudaErrorCheck(cudaMemcpy(d_tau, &tau, sizeof(double), cudaMemcpyHostToDevice));
+			RoeStep<<<1,blockSize>>>(nbrOfGrids, d_u1, d_u2, d_u3, d_vol, d_f1, d_f2, d_f3, d_tau, d_h, d_gama,
+				w1,w2,w3,w4, fc1,fc2,fc3, fr1,fr2,fr3, fl1,fl2,fl3, fludif1,fludif2,fludif3,
+				rsumr, utilde, htilde, uvdif, absvt, ssc, vsc,
+				eiglam1,eiglam2,eiglam3, sgn1,sgn2,sgn3, isb1,isb2,isb3, a1,a2,a3, ac11,ac12,ac13, ac21,ac22,ac23);
+		}
+		copyDeviceToHost(nbrOfGrids);
+		writeToFile(filename[run]);
+		std::cout << blue << "solution: " << filename[run] << reset << std::endl;
+	}
+	freeDeviceMemory();
+	freeHostMemory();
+}
+
+/*/
 void ShockTube::RoeDevice() {
 	std::cout << yellow << __func__ << reset;
 	nbrOfGrids = 256;
@@ -153,3 +211,4 @@ void ShockTube::RoeDevice() {
 	std::cout << blue << "solution: RoeDevice.dat" << reset << std::endl;
 	freeHostMemory();
 }
+/**/

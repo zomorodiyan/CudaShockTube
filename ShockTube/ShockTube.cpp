@@ -105,7 +105,8 @@ void ShockTube::hostUpdateTau() {
 void ShockTube::writeToFile(std::string fileName){
 	std::ofstream myfile;
 	myfile.open(fileName);
-	myfile << "variables = x, rho, u, p, mo, e, et, T, c, M, h" << std::endl;
+	myfile << "variables = position, density, velocity, pressure, momentum, energy, totalEnergy, temperature, soundVelocity, machNumber, enthalpy" << std::endl;
+	//myfile << "variables = x, rho, u, p, mo, e, et, T, c, mach, h" << std::endl;
 	for (int i = 0; i < nbrOfGrids; i++) {
 		double rho = u1[i];
 		double u = u2[i] / rho;

@@ -1,4 +1,4 @@
-variables = x, rho, u, p, mo, e, et, T, c, M, h
+variables = position, density, velocity, pressure, momentum, energy, totalEnergy, temperature, soundVelocity, machNumber, enthalpy
 0 1 -0 1 -0 2.5 2.5 1 1.18322 -0 3.5
 0.00390625 1 0 1 0 2.5 2.5 1 1.18322 0 3.5
 0.0078125 1 0 1 0 2.5 2.5 1 1.18322 0 3.5

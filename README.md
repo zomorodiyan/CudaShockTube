@@ -16,7 +16,7 @@ For analytical results we used sod library from Ibackus's repository[4] which is
 Build and run the solution of cudaShockTube/shockTube.sln in Visual Studio to get lax.dat, roe.dat.
 
 ## To visualize the results
-Check "Accept Connections" from Tecplot 360 application -> Scripting tab -> Pytecplot Connections.
+Check "Accept Connections" from Tecplot 360 application -> Scripting tab -> Pytecplot Connections.<br/>
 Run pytecplot/XYLine.py by python.
 
 ## Prerequisites

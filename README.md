@@ -33,5 +33,5 @@ Run pytecplot/XYLine.py by python.
 
 # Learning Resources
 Riemann Solvers and Numerical Methods for Fluid Dynamic, A Practical Introduction, Book by Eleuterio F.toro<br/>
-[NUMERICA](https://eleuteriotoro.com/software/), a library of source codes for solving hyperbolic partial differential equation in Fortran lanquage<br/>
+[NUMERICA](https://eleuteriotoro.com/software/), a library of source codes for solving hyperbolic partial differential equation in Fortran language<br/>
 [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
